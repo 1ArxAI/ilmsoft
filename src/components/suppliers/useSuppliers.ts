@@ -13,7 +13,7 @@ export const useSuppliers = (schoolId: string) => {
     // Fetch suppliers
     const { data: suppliersData, error: suppliersError } = await supabase
       .from('suppliers')
-      .select('id, school_id, supplier_name, business_name, contact_number, category, contact_person, phone, address, opening_balance, current_balance, notes, created_at')
+      .select('id, school_id, supplier_name, business_name, contact_number, address, opening_balance, current_balance, notes, created_at')
       .eq('school_id', schoolId)
       .order('supplier_name');
     

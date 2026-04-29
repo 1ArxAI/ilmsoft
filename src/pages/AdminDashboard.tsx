@@ -346,8 +346,13 @@ export const AdminDashboard = () => {
                         </div>
                       </div>
                       <div className="school-card-footer">
-                        <span className={`credit-pill ${st.cls}`}><CreditCard size={12} /> {st.label}</span>
-                        <span style={{ fontSize:'var(--font-xs)', color:'var(--text-muted)' }}>{s.total_credits} total credits</span>
+                        <div className="school-card-stats">
+                          <span className={`credit-pill ${st.cls}`}><CreditCard size={12} /> {st.label}</span>
+                          <span style={{ fontSize:'var(--font-xs)', color:'var(--text-muted)' }}>{s.total_credits} total credits</span>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/school/${s.id}`)}>
+                          View Insights
+                        </Button>
                       </div>
                     </div>
                   );

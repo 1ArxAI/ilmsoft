@@ -10,6 +10,7 @@ import { Signup } from './pages/Signup';
 import { JoinInvite } from './pages/JoinInvite';
 import { Dashboard } from './pages/Dashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminSchoolInsights } from './pages/AdminSchoolInsights';
 import { ResetPassword } from './pages/ResetPassword';
 import { UpdatePassword } from './pages/UpdatePassword';
 import './App.css';
@@ -40,6 +41,7 @@ function AppContent() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/update-password" element={<UpdatePassword />} />
           <Route path="/dashboard/*" element={<ProtectedRoute><CreditGuard><Dashboard /></CreditGuard></ProtectedRoute>} />
+          <Route path="/admin/school/:id" element={<ProtectedRoute><AdminSchoolInsights /></ProtectedRoute>} />
           <Route path="/admin/*"     element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         </Routes>
       </main>
