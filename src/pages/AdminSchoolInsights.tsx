@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { 
   ArrowLeft, Users, GraduationCap, School, 
-  Wallet, TrendingDown, Clock, Building2,
-  Calendar, Phone, Mail, TrendingUp,
-  Activity, BarChart3, AlertCircle, CheckCircle2,
-  MoreVertical, Download, ExternalLink, RefreshCw,
+  Wallet, Calendar, Phone, Mail, TrendingUp,
+  Activity, AlertCircle, Download, ExternalLink, RefreshCw,
   LogOut, ShieldCheck, MapPin
 } from 'lucide-react';
 import './AdminSchoolInsights.css';
@@ -103,6 +101,15 @@ export const AdminSchoolInsights = () => {
     <div className="insights-loader-wrap">
       <div className="pro-spinner" />
       <p>Building school intelligence report…</p>
+    </div>
+  );
+
+  if (error || !school) return (
+    <div className="insights-loader-wrap error">
+      <AlertCircle size={48} className="text-danger" />
+      <h2>Intelligence Report Failed</h2>
+      <p>{error || 'School data could not be retrieved'}</p>
+      <Button onClick={() => navigate('/admin')}>Back to Dashboard</Button>
     </div>
   );
 
