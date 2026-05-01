@@ -23,7 +23,8 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
     missingClassCount: number;
     students: Record<string, unknown>[];
   } | null>(null);
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [detailClassId, setDetailClassId] = useState<string | null>(null);
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [classes, setClasses] = useState<{id: string, name: string, monthly_fee: number}[]>([]);
   const [fixing, setFixing] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
@@ -40,6 +41,21 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
     });
     return groups;
   }, [preview?.students]);
+
+  // Derived stats based on selected classes
+  const stats = useMemo(() => {
+    if (!preview?.students) return { count: 0, total: 0 };
+    
+    const students = preview.students.filter((s: any) => {
+      const cid = (s.current_class_id || s.admission_class_id || 'unassigned') as string;
+      return selectedClassIds.includes(cid);
+    });
+
+    return {
+      count: students.length,
+      total: students.reduce((sum, s: any) => sum + (Number(s.current_monthly_fee) || 0), 0)
+    };
+  }, [preview?.students, selectedClassIds]);
 
   // Get current and next two months
   const upcomingMonths = useMemo(() => {
@@ -128,6 +144,10 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
           missingClassCount: missingClass.length,
           students: data
         });
+
+        // Default: select all classes that have students
+        const allClassIds = [...new Set(data.map(s => (s.current_class_id || (s as any).admission_class_id || 'unassigned') as string))];
+        setSelectedClassIds(allClassIds);
       }
     } catch (err) {
       console.error(err);
@@ -192,7 +212,8 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
     try {
       const { data, error } = await supabase.rpc('generate_bulk_fees', {
         p_school_id: schoolId,
-        p_months: selectedMonths
+        p_months: selectedMonths,
+        p_class_ids: selectedClassIds
       });
 
       if (error) throw error;
@@ -329,25 +350,50 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
               const className = classes.find(c => c.id === classId)?.name || (classId === 'unassigned' ? 'Unassigned' : 'Unknown Class');
               const classTotal = students.reduce((sum, s) => sum + (Number(s.current_monthly_fee) || 0), 0);
               const isUnassigned = classId === 'unassigned';
-              const isSelected = selectedClassId === classId;
+              const isSelected = selectedClassIds.includes(classId);
+              const isFocused = detailClassId === classId;
 
               return (
                 <div 
                   key={classId}
-                  onClick={() => setSelectedClassId(isSelected ? null : classId)}
+                  onClick={() => {
+                    // Toggle selection
+                    setSelectedClassIds(prev => 
+                      prev.includes(classId) 
+                        ? prev.filter(id => id !== classId) 
+                        : [...prev, classId]
+                    );
+                    // Also focus for detail view
+                    setDetailClassId(classId);
+                  }}
                   className="record-card"
                   style={{ 
                     cursor: 'pointer', flexDirection: 'column', gap: '0.5rem',
-                    border: isUnassigned ? '1.5px dashed var(--danger)' : isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    background: isUnassigned ? 'var(--danger-light)' : isSelected ? 'var(--primary-light)' : 'var(--surface)',
-                    boxShadow: isSelected ? 'var(--shadow-md)' : 'none'
+                    border: isFocused ? '2px solid var(--primary)' : (isUnassigned ? '1.5px dashed var(--danger)' : '1px solid var(--border)'),
+                    background: isSelected 
+                      ? (isFocused ? 'var(--primary-light)' : 'var(--surface)') 
+                      : 'var(--bg-alt)',
+                    boxShadow: isFocused ? 'var(--shadow-md)' : 'none',
+                    opacity: isSelected ? 1 : 0.6,
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
                   }}
                 >
+                  <div style={{ 
+                    position: 'absolute', top: '10px', right: '10px',
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    border: '1.5px solid', borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+                    background: isSelected ? 'var(--primary)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    {isSelected && <Check size={12} color="white" />}
+                  </div>
+
                   <div style={{ fontWeight: 700, fontSize: '1rem', color: isUnassigned ? 'var(--danger)' : 'var(--text)' }}>{className}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                       {students.length} Students
                   </div>
-                  <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem', marginTop: '0.5rem' }}>
+                  <div style={{ fontWeight: 800, color: isSelected ? 'var(--primary)' : 'var(--text-muted)', fontSize: '1.1rem', marginTop: '0.5rem' }}>
                     Rs. {classTotal.toLocaleString()}
                   </div>
                 </div>
@@ -356,14 +402,14 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
           </div>
 
           {/* Student List Inline Table (Replaced Modal) */}
-          {selectedClassId && (
+          {detailClassId && (
             <div className="record-card" style={{ display: 'block', marginBottom: '4rem', animation: 'fadeIn 0.2s ease-out', borderTop: '4px solid var(--primary)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Students in {classes.find(c => c.id === selectedClassId)?.name || 'Unassigned'}</h3>
+                  <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Students in {classes.find(c => c.id === detailClassId)?.name || 'Unassigned'}</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Review students participating in this month's fee generation</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedClassId(null)}>✕ Close</Button>
+                <Button variant="ghost" size="sm" onClick={() => setDetailClassId(null)}>✕ Close</Button>
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table className="data-table">
@@ -375,7 +421,7 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {groupedStudents[selectedClassId]?.map(s => (
+                    {groupedStudents[detailClassId]?.map(s => (
                       <tr key={s.id}>
                         <td>
                           <div style={{ fontWeight: 600 }}>{s.first_name} {s.last_name}</div>
@@ -408,7 +454,7 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
             <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Students</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{preview?.count || 0}</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{stats.count}</div>
             </div>
             <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Months</div>
@@ -418,7 +464,7 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>Final Generation Total</div>
               <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--primary)', lineHeight: 1 }}>
-                Rs. {((preview?.total || 0) * selectedMonths.length).toLocaleString()}
+                Rs. {(stats.total * selectedMonths.length).toLocaleString()}
               </div>
             </div>
           </div>
