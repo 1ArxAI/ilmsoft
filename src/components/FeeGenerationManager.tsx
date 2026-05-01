@@ -210,10 +210,14 @@ export const FeeGenerationManager = ({ schoolId }: { schoolId: string }) => {
 
     setGenerating(true);
     try {
+      const realClassIds = selectedClassIds.filter(id => id !== 'unassigned');
+      const includeUnassigned = selectedClassIds.includes('unassigned');
+
       const { data, error } = await supabase.rpc('generate_bulk_fees', {
         p_school_id: schoolId,
         p_months: selectedMonths,
-        p_class_ids: selectedClassIds
+        p_class_ids: realClassIds,
+        p_include_unassigned: includeUnassigned
       });
 
       if (error) throw error;
