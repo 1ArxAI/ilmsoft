@@ -187,6 +187,7 @@ export const FeeStatsManager = ({
   const [classBreakdown, setClassBreakdown] = useState<ClassBreakdownItem[]>([]);
 
   // Dues search
+  const [allParentDues, setAllParentDues] = useState<ParentDuesRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -336,7 +337,7 @@ export const FeeStatsManager = ({
     const threshold = parseFloat(searchTerm);
     const isNumeric = !isNaN(threshold) && /^\d+$/.test(searchTerm.trim());
 
-    return allParentDues.filter(r => {
+    return allParentDues.filter((r: ParentDuesRow) => {
       // 1. Check name match
       const nameMatch = r.name.toLowerCase().includes(lowerSearch);
       // 2. Check contact match
