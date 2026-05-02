@@ -26,7 +26,8 @@ export const StudentTable = React.memo<StudentTableProps>(({
       <table className="data-table">
         <thead>
           <tr>
-            {visibleColumns.name && <th>Student Name</th>}
+            <th>Student Name</th>
+            <th>Parent</th>
             {visibleColumns.admissionClass && <th>Admission Class</th>}
             {visibleColumns.currentClass && <th>Current Class</th>}
             {visibleColumns.fee && <th>Class Fee</th>}
@@ -35,20 +36,18 @@ export const StudentTable = React.memo<StudentTableProps>(({
             {visibleColumns.gender && <th>Gender</th>}
             {visibleColumns.cnic && <th>CNIC</th>}
             {visibleColumns.dob && <th>Date of Birth</th>}
-            {visibleColumns.parent && <th>Parent</th>}
             {visibleColumns.actions && <th>Actions</th>}
           </tr>
         </thead>
         <tbody>
           {students.map(s => (
             <tr key={s.id} className={!s.active ? 'inactive' : ''}>
-              {visibleColumns.name && (
-                <td>
-                  <div className="student-cell">
-                    <span>{s.first_name} {s.last_name}</span>
-                  </div>
-                </td>
-              )}
+              <td>
+                <div className="student-cell">
+                  <span>{s.first_name} {s.last_name}</span>
+                </div>
+              </td>
+              <td>{getParentName(s.parent_id)}</td>
               {visibleColumns.admissionClass && (
                 <td>
                   <span className="class-cell">
@@ -91,7 +90,6 @@ export const StudentTable = React.memo<StudentTableProps>(({
               )}
               {visibleColumns.cnic && <td className="font-mono text-xs">{s.cnic || '—'}</td>}
               {visibleColumns.dob && <td>{s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString() : '—'}</td>}
-              {visibleColumns.parent && <td>{getParentName(s.parent_id)}</td>}
               {visibleColumns.actions && (
                 <td>
                   <div className="row-actions">

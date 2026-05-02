@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
-  TrendingUp, Calendar, Clock, Search, Users, AlertCircle,
+  TrendingUp, Calendar, Clock, Search, Users, AlertCircle, X,
 } from 'lucide-react';
 import './FeeStatsManager.css';
 
@@ -187,8 +187,8 @@ export const FeeStatsManager = ({
   const [classBreakdown, setClassBreakdown] = useState<ClassBreakdownItem[]>([]);
 
   // Dues search
-  const [allParentDues, setAllParentDues] = useState<ParentDuesRow[]>([]);
-  const [duesThreshold, setDuesThreshold] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const cm = useMemo(() => currentMonthStr(), []);
   const today = useMemo(() => todayStr(), []);
@@ -330,10 +330,23 @@ export const FeeStatsManager = ({
 
   /* ── filtered dues ── */
   const filteredDues = useMemo(() => {
-    const threshold = parseFloat(duesThreshold);
-    if (!duesThreshold.trim() || isNaN(threshold) || threshold <= 0) return allParentDues;
-    return allParentDues.filter(r => r.balance >= threshold);
-  }, [allParentDues, duesThreshold]);
+    if (!searchTerm.trim()) return allParentDues;
+
+    const lowerSearch = searchTerm.toLowerCase();
+    const threshold = parseFloat(searchTerm);
+    const isNumeric = !isNaN(threshold) && /^\d+$/.test(searchTerm.trim());
+
+    return allParentDues.filter(r => {
+      // 1. Check name match
+      const nameMatch = r.name.toLowerCase().includes(lowerSearch);
+      // 2. Check contact match
+      const contactMatch = r.contact.toLowerCase().includes(lowerSearch);
+      // 3. If numeric, check if balance >= threshold
+      const balanceMatch = isNumeric && r.balance >= threshold;
+
+      return nameMatch || contactMatch || balanceMatch;
+    });
+  }, [allParentDues, searchTerm]);
 
   /* ── collection rate ── */
   const collectionRate = expectedMonthly > 0
@@ -417,14 +430,29 @@ export const FeeStatsManager = ({
         </div>
 
         <div className="fss-dues-search-row">
-          <div className="fss-dues-search-box">
+          <div className="fss-dues-search-box" onClick={() => searchInputRef.current?.focus()}>
             <Search size={16} />
             <input
-              type="number"
-              placeholder="Minimum dues (e.g. 5000)"
-              value={duesThreshold}
-              onChange={e => setDuesThreshold(e.target.value)}
+              ref={searchInputRef}
+              type="text"
+              inputMode="text"
+              placeholder="Search by name or min. dues (e.g. 5000)"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button 
+                className="fss-dues-clear" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearchTerm('');
+                  searchInputRef.current?.focus();
+                }}
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
           <div className="fss-dues-count">
             <Users size={14} /> {filteredDues.length} Parents Found
@@ -433,7 +461,7 @@ export const FeeStatsManager = ({
 
         {filteredDues.length === 0 ? (
           <div className="fss-dues-empty">
-            <p>No parents found with dues ≥ {duesThreshold || 0}</p>
+            <p>No parents found matching "{searchTerm}"</p>
           </div>
         ) : (
           <div className="fss-dues-table-wrap">

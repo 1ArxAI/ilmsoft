@@ -40,9 +40,9 @@ export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: R
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
-    name: true, admissionClass: true, currentClass: true, fee: true,
+    admissionClass: true, currentClass: true, fee: true,
     discount: true, monthlyFee: true, actions: true,
-    gender: false, cnic: false, dob: false, parent: false
+    gender: false, cnic: false, dob: false
   });
 
   const { students, classes, parents, loading, stats, load } = useStudents(schoolId, showFlash);
@@ -170,7 +170,6 @@ export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: R
               <div className="column-settings-popover">
                 <div className="popover-title">Show / Hide Columns</div>
                 {[
-                  { id: 'name', label: 'Student Name', icon: GraduationCap },
                   { id: 'admissionClass', label: 'Admission Class', icon: BookOpen },
                   { id: 'currentClass', label: 'Current Class', icon: BookOpen },
                   { id: 'fee', label: 'Class Fee (Gross)', icon: Search },
@@ -178,8 +177,7 @@ export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: R
                   { id: 'monthlyFee', label: 'Monthly Fee (Net)', icon: Search },
                   { id: 'gender', label: 'Gender', icon: UserCheck },
                   { id: 'cnic', label: 'CNIC', icon: Search },
-                  { id: 'dob', label: 'Date of Birth', icon: Search },
-                  { id: 'parent', label: 'Parent', icon: Search }
+                  { id: 'dob', label: 'Date of Birth', icon: Search }
                 ].map(col => (
                   <div key={col.id} onClick={() => toggleColumn(col.id)} className={`popover-item ${visibleColumns[col.id] ? 'active' : ''}`}>
                     <col.icon size={14} /> <span>{col.label}</span> {visibleColumns[col.id] && <Check size={14} />}
