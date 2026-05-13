@@ -181,14 +181,35 @@ export default function ExamResultsManager({ schoolId }: { schoolId: string }) {
       // b. Fetch active students in the class
       const { data: studentData, error: studErr } = await supabase
         .from('students')
-        .select('id, first_name, last_name, registration_number')
+        .select('id, first_name, last_name, registration_number, parent_id')
         .eq('school_id', schoolId)
         .eq('current_class_id', selectedClassId)
         .eq('active', true)
         .order('first_name');
 
       if (studErr) throw studErr;
-      setStudents(studentData || []);
+
+      // Fetch parents for these students
+      const parentIds = Array.from(new Set((studentData || []).map(s => s.parent_id).filter(Boolean)));
+      const parentsMap = new Map();
+      if (parentIds.length > 0) {
+        const { data: parentData } = await supabase
+          .from('parents')
+          .select('id, first_name, last_name')
+          .in('id', parentIds);
+        if (parentData) {
+          parentData.forEach(p => {
+            parentsMap.set(p.id, `${p.first_name} ${p.last_name}`.trim());
+          });
+        }
+      }
+
+      const studentsWithParents = (studentData || []).map(s => ({
+        ...s,
+        father_name: s.parent_id ? parentsMap.get(s.parent_id) : ''
+      }));
+
+      setStudents(studentsWithParents);
 
       // c. Fetch existing total marks configuration
       const { data: configData } = await supabase
@@ -515,6 +536,7 @@ export default function ExamResultsManager({ schoolId }: { schoolId: string }) {
                         <td className="sticky-col">
                           <div className="student-name-box">
                             <strong>{student.first_name} {student.last_name}</strong>
+                            <span style={{ fontSize: '11px', opacity: 0.8, color: 'var(--text-muted)' }}>Father: {student.father_name || 'N/A'}</span>
                             <span>{student.registration_number}</span>
                           </div>
                         </td>

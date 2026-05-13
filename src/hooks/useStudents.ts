@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
+import useSWR from 'swr';
 import { supabase } from '../lib/supabase';
 
 export type Student = {
@@ -23,41 +24,45 @@ export type Student = {
 export type Class = { id: string; name: string; monthly_fee: number; active: boolean; };
 export type Parent = { id: string; first_name: string; last_name: string; };
 
-export const useStudents = (schoolId: string, showFlash: (msg: string) => void) => {
-  const [students, setStudents]       = useState<Student[]>([]);
-  const [classes, setClasses]         = useState<Class[]>([]);
-  const [parents, setParents]         = useState<Parent[]>([]);
-  const [loading, setLoading]         = useState(true);
+export const fetchSchoolData = async (schoolId: string) => {
+  if (!schoolId) return { students: [], classes: [], parents: [] };
+  
+  const [
+    { data: sData, error: sErr },
+    { data: cData, error: cErr },
+    { data: pData, error: pErr },
+  ] = await Promise.all([
+    supabase.from('students').select('id, school_id, first_name, last_name, gender, cnic, date_of_birth, date_of_admission, admission_class_id, current_class_id, monthly_fee, current_monthly_fee, discount_type, discount_value, active, parent_id').eq('school_id', schoolId).order('first_name'),
+    supabase.from('classes').select('id, name, monthly_fee, active').eq('school_id', schoolId).eq('active', true).order('name'),
+    supabase.from('parents').select('id, first_name, last_name').eq('school_id', schoolId).eq('is_active', true).order('first_name'),
+  ]);
 
-  const load = useCallback(async () => {
-    if (!schoolId) return;
-    setLoading(true);
-    try {
-      const [
-        { data: sData, error: sErr },
-        { data: cData, error: cErr },
-        { data: pData, error: pErr },
-      ] = await Promise.all([
-        supabase.from('students').select('id, school_id, first_name, last_name, gender, cnic, date_of_birth, date_of_admission, admission_class_id, current_class_id, monthly_fee, current_monthly_fee, discount_type, discount_value, active, parent_id').eq('school_id', schoolId).order('first_name'),
-        supabase.from('classes').select('id, name, monthly_fee, active').eq('school_id', schoolId).eq('active', true).order('name'),
-        supabase.from('parents').select('id, first_name, last_name').eq('school_id', schoolId).eq('is_active', true).order('first_name'),
-      ]);
+  if (sErr) throw sErr;
+  if (cErr) throw cErr;
+  if (pErr) throw pErr;
 
-      if (sErr) throw sErr;
-      if (cErr) throw cErr;
-      if (pErr) throw pErr;
+  return {
+    students: (sData || []) as Student[],
+    classes: (cData || []) as Class[],
+    parents: (pData || []) as Parent[]
+  };
+};
 
-      setStudents(sData || []);
-      setClasses(cData || []);
-      setParents(pData || []);
-    } catch (err: unknown) {
-      showFlash('Error loading student data: ' + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setLoading(false);
+export const useStudents = (schoolId: string, showFlash?: (msg: string) => void) => {
+  const { data, isLoading, mutate } = useSWR(
+    schoolId ? ['school-data', schoolId] : null,
+    () => fetchSchoolData(schoolId),
+    {
+      onError: (err) => {
+        if (showFlash) showFlash('Error loading student data: ' + (err instanceof Error ? err.message : String(err)));
+      }
     }
-  }, [schoolId, showFlash]);
+  );
 
-  useEffect(() => { load(); }, [load]);
+  const students = data?.students || [];
+  const classes = data?.classes || [];
+  const parents = data?.parents || [];
+  const loading = isLoading;
 
   const stats = useMemo(() => {
     const active = students.filter(s => s.active);
@@ -98,7 +103,7 @@ export const useStudents = (schoolId: string, showFlash: (msg: string) => void) 
     parents,
     loading,
     stats,
-    load,
-    setStudents
+    load: mutate, // Re-fetch or update cache
+    setStudents: () => {} // Kept for backwards compatibility
   };
 };

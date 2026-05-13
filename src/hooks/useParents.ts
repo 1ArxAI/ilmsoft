@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
+import { useMemo } from 'react';
+import useSWR from 'swr';
+import { fetchSchoolData } from './useStudents';
 
 export type Parent = {
   id: string;
@@ -18,80 +19,55 @@ export type Parent = {
 
 export type Class = { id: string; name: string; monthly_fee: number; };
 
-export const useParents = (schoolId: string, showFlash: (msg: string) => void) => {
-  const [records, setRecords] = useState<Parent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
-  const [monthlyTotals, setMonthlyTotals] = useState<Record<string, number>>({});
-  const [discountTotals, setDiscountTotals] = useState<Record<string, number>>({});
-  const [globalStats, setGlobalStats] = useState({ totalChildren: 0, totalNet: 0, totalScholarships: 0 });
-
-  const load = useCallback(async () => {
-    if (!schoolId) return;
-    setLoading(true);
-    try {
-      const [{ data: parents }, { data: students }] = await Promise.all([
-        supabase.from('parents').select('id, school_id, first_name, last_name, cnic, contact, address, notes, created_at, updated_at').eq('school_id', schoolId).eq('is_active', true).order('created_at', { ascending: false }),
-        supabase.from('students')
-          .select('id, parent_id, monthly_fee, discount_type, discount_value, current_monthly_fee')
-          .eq('school_id', schoolId)
-          .eq('active', true)
-      ]);
-      
-      if (!parents) {
-        setRecords([]);
-        setLoading(false);
-        return;
+export const useParents = (schoolId: string, showFlash?: (msg: string) => void) => {
+  const { data, isLoading, mutate } = useSWR(
+    schoolId ? ['school-data', schoolId] : null,
+    () => fetchSchoolData(schoolId),
+    {
+      onError: (err) => {
+        if (showFlash) showFlash('Error loading parents: ' + (err instanceof Error ? err.message : String(err)));
       }
-      
-      setRecords(parents);
-      
-      const counts: Record<string, number> = {};
-      const mTotals: Record<string, number> = {};
-      const dTotals: Record<string, number> = {};
-      
-      let gChildren = 0;
-      let gNet = 0;
-      let gScholarships = 0;
-
-      students?.forEach(s => {
-        counts[s.parent_id] = (counts[s.parent_id] || 0) + 1;
-        const netFee = Number(s.current_monthly_fee) || 0;
-        const grossFee = Number(s.monthly_fee) || netFee;
-        const discount = grossFee - netFee;
-        
-        mTotals[s.parent_id] = (mTotals[s.parent_id] || 0) + netFee;
-        dTotals[s.parent_id] = (dTotals[s.parent_id] || 0) + discount;
-
-        gChildren++;
-        gNet += netFee;
-        gScholarships += discount;
-      });
-
-      setStudentCounts(counts);
-      setMonthlyTotals(mTotals);
-      setDiscountTotals(dTotals);
-      setGlobalStats({ totalChildren: gChildren, totalNet: gNet, totalScholarships: gScholarships });
-    } catch (err: unknown) {
-      showFlash('Error loading parents: ' + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setLoading(false);
     }
-  }, [schoolId, showFlash]);
+  );
 
-  const loadClasses = useCallback(async () => {
-    if (!schoolId) return;
-    try {
-      const { data } = await supabase.from('classes').select('id, name, monthly_fee').eq('school_id', schoolId).eq('active', true).order('name');
-      setClasses(data || []);
-    } catch (err: unknown) {
-      showFlash('Error loading classes: ' + (err instanceof Error ? err.message : String(err)));
-      setClasses([]);
-    }
-  }, [schoolId, showFlash]);
+  const records = (data?.parents || []) as Parent[];
+  const students = data?.students || [];
+  const classes = data?.classes || [];
+  const loading = isLoading;
 
-  useEffect(() => { load(); }, [load]);
+  const { studentCounts, monthlyTotals, discountTotals, globalStats } = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const mTotals: Record<string, number> = {};
+    const dTotals: Record<string, number> = {};
+    
+    let gChildren = 0;
+    let gNet = 0;
+    let gScholarships = 0;
+
+    // Only process active students
+    students.filter(s => s.active).forEach(s => {
+      if (!s.parent_id) return;
+      
+      counts[s.parent_id] = (counts[s.parent_id] || 0) + 1;
+      const netFee = Number(s.current_monthly_fee) || 0;
+      const grossFee = Number(s.monthly_fee) || netFee;
+      const discount = grossFee - netFee;
+      
+      mTotals[s.parent_id] = (mTotals[s.parent_id] || 0) + netFee;
+      dTotals[s.parent_id] = (dTotals[s.parent_id] || 0) + discount;
+
+      gChildren++;
+      gNet += netFee;
+      gScholarships += discount;
+    });
+
+    return {
+      studentCounts: counts,
+      monthlyTotals: mTotals,
+      discountTotals: dTotals,
+      globalStats: { totalChildren: gChildren, totalNet: gNet, totalScholarships: gScholarships }
+    };
+  }, [students]);
 
   const parentStats = useMemo(() => {
     return { 
@@ -114,7 +90,7 @@ export const useParents = (schoolId: string, showFlash: (msg: string) => void) =
     discountTotals,
     globalStats,
     parentStats,
-    load,
-    loadClasses
+    load: mutate,
+    loadClasses: mutate
   };
 };

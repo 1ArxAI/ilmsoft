@@ -13,6 +13,8 @@ interface Student {
   first_name: string;
   last_name: string;
   registration_number: string;
+  parent_id?: string;
+  father_name?: string;
 }
 
 export const ResultCardManager: React.FC<{ schoolId: string }> = ({ schoolId }) => {
@@ -99,13 +101,28 @@ export const ResultCardManager: React.FC<{ schoolId: string }> = ({ schoolId }) 
         // Fetch all students in the class
         const { data: studentData, error: studErr } = await supabase
           .from('students')
-          .select('id, first_name, last_name, registration_number')
+          .select('id, first_name, last_name, registration_number, parent_id')
           .eq('current_class_id', selectedClassId)
           .eq('school_id', schoolId)
           .eq('active', true)
           .order('first_name');
 
         if (studErr) throw studErr;
+
+        // Fetch parents
+        const parentIds = Array.from(new Set((studentData || []).map(s => s.parent_id).filter(Boolean)));
+        const parentsMap = new Map();
+        if (parentIds.length > 0) {
+          const { data: parentData } = await supabase
+            .from('parents')
+            .select('id, first_name, last_name')
+            .in('id', parentIds);
+          if (parentData) {
+            parentData.forEach(p => {
+              parentsMap.set(p.id, `${p.first_name} ${p.last_name}`.trim());
+            });
+          }
+        }
 
         // Fetch which students have results for THIS term
         const { data: resultData, error: resErr } = await supabase
@@ -120,6 +137,7 @@ export const ResultCardManager: React.FC<{ schoolId: string }> = ({ schoolId }) 
         
         const studentsWithStatus = (studentData || []).map(s => ({
           ...s,
+          father_name: s.parent_id ? parentsMap.get(s.parent_id) : '',
           has_result: hasResult.has(s.id)
         }));
 
@@ -138,6 +156,7 @@ export const ResultCardManager: React.FC<{ schoolId: string }> = ({ schoolId }) 
     return (students as any[]).filter(s => 
       s.first_name.toLowerCase().includes(q) || 
       s.last_name.toLowerCase().includes(q) || 
+      (s.father_name && s.father_name.toLowerCase().includes(q)) ||
       (s.registration_number && s.registration_number.toLowerCase().includes(q))
     );
   }, [students, searchTerm]);
@@ -233,6 +252,7 @@ export const ResultCardManager: React.FC<{ schoolId: string }> = ({ schoolId }) 
                   <th style={{ width: '40px' }}></th>
                   <th>Admission No</th>
                   <th>Student Name</th>
+                  <th>Father Name</th>
                   <th style={{ textAlign: 'center' }}>Result Status</th>
                 </tr>
               </thead>
@@ -254,6 +274,7 @@ export const ResultCardManager: React.FC<{ schoolId: string }> = ({ schoolId }) 
                     </td>
                     <td style={{ fontWeight: 600, fontFamily: 'monospace' }}>{s.registration_number || 'N/A'}</td>
                     <td style={{ fontWeight: 500 }}>{s.first_name} {s.last_name}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{s.father_name || 'N/A'}</td>
                     <td style={{ textAlign: 'center' }}>
                       {s.has_result ? (
                         <span className="status-badge active" style={{ fontSize: '11px', padding: '2px 8px' }}>
