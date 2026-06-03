@@ -1,0 +1,31 @@
+name: Database Keep-Alive
+
+on:
+  schedule:
+    # Runs daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allows manual triggering from the GitHub Actions tab
+
+jobs:
+  keep-alive:
+    name: Touch Supabase Database
+    runs-on: ubuntu-latest
+    
+    # Configure the environment containing the Supabase credentials
+    environment: supabase connect
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Keep-Alive Script
+        run: node .github/scripts/keep_alive.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
