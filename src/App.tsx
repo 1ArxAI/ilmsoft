@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/layout/Navbar';
-import { CreditGuard } from './components/CreditGuard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -40,7 +39,7 @@ function AppContent() {
           <Route path="/join/:token" element={<JoinInvite />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/update-password" element={<UpdatePassword />} />
-          <Route path="/dashboard/*" element={<ProtectedRoute><CreditGuard><Dashboard /></CreditGuard></ProtectedRoute>} />
+          <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/admin/school/:id" element={<ProtectedRoute><AdminSchoolInsights /></ProtectedRoute>} />
           <Route path="/admin/*"     element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         </Routes>

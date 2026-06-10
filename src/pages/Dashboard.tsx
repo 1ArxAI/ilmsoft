@@ -105,6 +105,15 @@ export const Dashboard = () => {
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
   const [adminSettings, setAdminSettings] = useState<any>(null);
 
+  const changeTab = (t: Tab) => {
+    if (creditExpired && t !== 'buy' && t !== 'history') {
+      setMsg({ text: 'Access locked: Please purchase credits first.', type: 'error' });
+      setTab('buy');
+      return;
+    }
+    setTab(t);
+  };
+
   const checkCredits = useCallback(() => {
     if (!profile) return;
     const now = new Date();
@@ -222,14 +231,16 @@ export const Dashboard = () => {
         <nav className="sidebar-nav">
           <button
             className={`sidebar-nav-item${tab === 'overview' ? ' active' : ''}`}
-            onClick={() => setTab('overview')}
+            onClick={() => changeTab('overview')}
+            style={creditExpired ? { opacity: 0.5 } : undefined}
           >
             <LayoutDashboard size={18} /> Overview
           </button>
 
           <button
             className={`sidebar-nav-item${tab === 'fee-stats' ? ' active' : ''}`}
-            onClick={() => setTab('fee-stats')}
+            onClick={() => changeTab('fee-stats')}
+            style={creditExpired ? { opacity: 0.5 } : undefined}
           >
             <BarChart2 size={18} /> Fee Stats
           </button>
@@ -242,14 +253,15 @@ export const Dashboard = () => {
                 onClick={() => {
                   const current = openSections.has('people') ? new Set([...openSections].filter(s => s !== 'people')) : new Set([...openSections, 'people']);
                   setOpenSections(current);
-                  if (current.has('people')) setTab('people-parents');
+                  if (current.has('people')) changeTab('people-parents');
                 }}
+                style={creditExpired ? { opacity: 0.5 } : undefined}
               >
                 <Users2 size={18} /> People <ChevronDown size={14} className="sub-chevron" />
               </button>
               <div className="sidebar-sub-items">
-                <button className={`sidebar-sub-item${tab === 'people-parents' ? ' active' : ''}`} onClick={() => setTab('people-parents')}>Parents & Guardians</button>
-                <button className={`sidebar-sub-item${tab === 'people-students' ? ' active' : ''}`} onClick={() => setTab('people-students')}>Students</button>
+                <button className={`sidebar-sub-item${tab === 'people-parents' ? ' active' : ''}`} onClick={() => changeTab('people-parents')} style={creditExpired ? { opacity: 0.5 } : undefined}>Parents & Guardians</button>
+                <button className={`sidebar-sub-item${tab === 'people-students' ? ' active' : ''}`} onClick={() => changeTab('people-students')} style={creditExpired ? { opacity: 0.5 } : undefined}>Students</button>
               </div>
             </div>
           </div>
@@ -262,17 +274,18 @@ export const Dashboard = () => {
                 onClick={() => {
                   const current = openSections.has('finances') ? new Set([...openSections].filter(s => s !== 'finances')) : new Set([...openSections, 'finances']);
                   setOpenSections(current);
-                  if (current.has('finances')) setTab('finances-income');
+                  if (current.has('finances')) changeTab('finances-income');
                 }}
+                style={creditExpired ? { opacity: 0.5 } : undefined}
               >
                 <DollarSign size={18} /> Finances <ChevronDown size={14} className="sub-chevron" />
               </button>
               <div className="sidebar-sub-items">
-                <button className={`sidebar-sub-item${tab === 'finances-income' ? ' active' : ''}`} onClick={() => setTab('finances-income')}>Income</button>
-                <button className={`sidebar-sub-item${tab === 'finances-expense' ? ' active' : ''}`} onClick={() => setTab('finances-expense')}>Expenses</button>
-                <button className={`sidebar-sub-item${tab === 'finances-suppliers' ? ' active' : ''}`} onClick={() => setTab('finances-suppliers')}>Suppliers</button>
-                <button className={`sidebar-sub-item${tab === 'finances-extra-fees' ? ' active' : ''}`} onClick={() => setTab('finances-extra-fees')}>One-Time Collection</button>
-                <button className={`sidebar-sub-item${tab === 'finances-custom-receipt' ? ' active' : ''}`} onClick={() => setTab('finances-custom-receipt')}>Invoice / Payment</button>
+                <button className={`sidebar-sub-item${tab === 'finances-income' ? ' active' : ''}`} onClick={() => changeTab('finances-income')} style={creditExpired ? { opacity: 0.5 } : undefined}>Income</button>
+                <button className={`sidebar-sub-item${tab === 'finances-expense' ? ' active' : ''}`} onClick={() => changeTab('finances-expense')} style={creditExpired ? { opacity: 0.5 } : undefined}>Expenses</button>
+                <button className={`sidebar-sub-item${tab === 'finances-suppliers' ? ' active' : ''}`} onClick={() => changeTab('finances-suppliers')} style={creditExpired ? { opacity: 0.5 } : undefined}>Suppliers</button>
+                <button className={`sidebar-sub-item${tab === 'finances-extra-fees' ? ' active' : ''}`} onClick={() => changeTab('finances-extra-fees')} style={creditExpired ? { opacity: 0.5 } : undefined}>One-Time Collection</button>
+                <button className={`sidebar-sub-item${tab === 'finances-custom-receipt' ? ' active' : ''}`} onClick={() => changeTab('finances-custom-receipt')} style={creditExpired ? { opacity: 0.5 } : undefined}>Invoice / Payment</button>
               </div>
             </div>
           </div>
@@ -285,16 +298,17 @@ export const Dashboard = () => {
                 onClick={() => {
                   const current = openSections.has('fees-grp') ? new Set([...openSections].filter(s => s !== 'fees-grp')) : new Set([...openSections, 'fees-grp']);
                   setOpenSections(current);
-                  if (current.has('fees-grp')) setTab('fees-view');
+                  if (current.has('fees-grp')) changeTab('fees-view');
                 }}
+                style={creditExpired ? { opacity: 0.5 } : undefined}
               >
                 <Receipt size={18} /> Fees <ChevronDown size={14} className="sub-chevron" />
               </button>
               <div className="sidebar-sub-items">
-                <button className={`sidebar-sub-item${tab === 'fees-view' ? ' active' : ''}`} onClick={() => setTab('fees-view')}>Ledger & Statements</button>
-                <button className={`sidebar-sub-item${tab === 'fees-payment' ? ' active' : ''}`} onClick={() => setTab('fees-payment')}>Receive Payment</button>
-                <button className={`sidebar-sub-item${tab === 'fees-generate' ? ' active' : ''}`} onClick={() => setTab('fees-generate')}>Generate Fees</button>
-                <button className={`sidebar-sub-item${tab === 'fees-missing' ? ' active' : ''}`} onClick={() => setTab('fees-missing')}>Missing Fees</button>
+                <button className={`sidebar-sub-item${tab === 'fees-view' ? ' active' : ''}`} onClick={() => changeTab('fees-view')} style={creditExpired ? { opacity: 0.5 } : undefined}>Ledger & Statements</button>
+                <button className={`sidebar-sub-item${tab === 'fees-payment' ? ' active' : ''}`} onClick={() => changeTab('fees-payment')} style={creditExpired ? { opacity: 0.5 } : undefined}>Receive Payment</button>
+                <button className={`sidebar-sub-item${tab === 'fees-generate' ? ' active' : ''}`} onClick={() => changeTab('fees-generate')} style={creditExpired ? { opacity: 0.5 } : undefined}>Generate Fees</button>
+                <button className={`sidebar-sub-item${tab === 'fees-missing' ? ' active' : ''}`} onClick={() => changeTab('fees-missing')} style={creditExpired ? { opacity: 0.5 } : undefined}>Missing Fees</button>
               </div>
             </div>
           </div>
@@ -307,16 +321,17 @@ export const Dashboard = () => {
                 onClick={() => {
                   const current = openSections.has('exams-grp') ? new Set([...openSections].filter(s => s !== 'exams-grp')) : new Set([...openSections, 'exams-grp']);
                   setOpenSections(current);
-                  if (current.has('exams-grp')) setTab('exams-terms');
+                  if (current.has('exams-grp')) changeTab('exams-terms');
                 }}
+                style={creditExpired ? { opacity: 0.5 } : undefined}
               >
                 <Calendar size={18} /> Exams <ChevronDown size={14} className="sub-chevron" />
               </button>
               <div className="sidebar-sub-items">
-                <button className={`sidebar-sub-item${tab === 'exams-terms' ? ' active' : ''}`} onClick={() => setTab('exams-terms')}>Examination Terms</button>
-                <button className={`sidebar-sub-item${tab === 'exams-promotion' ? ' active' : ''}`} onClick={() => setTab('exams-promotion')}>Student Promotion</button>
-                <button className={`sidebar-sub-item${tab === 'exams-results' ? ' active' : ''}`} onClick={() => setTab('exams-results')}>Exam Results</button>
-                <button className={`sidebar-sub-item${tab === 'exams-results-cards' ? ' active' : ''}`} onClick={() => setTab('exams-results-cards')}>Result Cards</button>
+                <button className={`sidebar-sub-item${tab === 'exams-terms' ? ' active' : ''}`} onClick={() => changeTab('exams-terms')} style={creditExpired ? { opacity: 0.5 } : undefined}>Examination Terms</button>
+                <button className={`sidebar-sub-item${tab === 'exams-promotion' ? ' active' : ''}`} onClick={() => changeTab('exams-promotion')} style={creditExpired ? { opacity: 0.5 } : undefined}>Student Promotion</button>
+                <button className={`sidebar-sub-item${tab === 'exams-results' ? ' active' : ''}`} onClick={() => changeTab('exams-results')} style={creditExpired ? { opacity: 0.5 } : undefined}>Exam Results</button>
+                <button className={`sidebar-sub-item${tab === 'exams-results-cards' ? ' active' : ''}`} onClick={() => changeTab('exams-results-cards')} style={creditExpired ? { opacity: 0.5 } : undefined}>Result Cards</button>
               </div>
             </div>
           </div>
@@ -329,17 +344,18 @@ export const Dashboard = () => {
                 onClick={() => {
                   const current = openSections.has('profile-grp') ? new Set([...openSections].filter(s => s !== 'profile-grp')) : new Set([...openSections, 'profile-grp']);
                   setOpenSections(current);
-                  if (current.has('profile-grp')) setTab('profile');
+                  if (current.has('profile-grp')) changeTab('profile');
                 }}
+                style={creditExpired ? { opacity: 0.5 } : undefined}
               >
                 <Settings size={18} /> School Profile <ChevronDown size={14} className="sub-chevron" />
               </button>
               <div className="sidebar-sub-items">
-                <button className={`sidebar-sub-item${tab === 'profile' ? ' active' : ''}`} onClick={() => setTab('profile')}>General Profile</button>
-                <button className={`sidebar-sub-item${tab === 'classes' ? ' active' : ''}`} onClick={() => setTab('classes')}>Classes</button>
-                <button className={`sidebar-sub-item${tab === 'people-teachers' ? ' active' : ''}`} onClick={() => setTab('people-teachers')}>Teachers</button>
-                <button className={`sidebar-sub-item${tab === 'team' ? ' active' : ''}`} onClick={() => setTab('team')}>Team Management</button>
-                <button className={`sidebar-sub-item${tab === 'extra-fees' ? ' active' : ''}`} onClick={() => setTab('extra-fees')}>Extra Fees</button>
+                <button className={`sidebar-sub-item${tab === 'profile' ? ' active' : ''}`} onClick={() => changeTab('profile')} style={creditExpired ? { opacity: 0.5 } : undefined}>General Profile</button>
+                <button className={`sidebar-sub-item${tab === 'classes' ? ' active' : ''}`} onClick={() => changeTab('classes')} style={creditExpired ? { opacity: 0.5 } : undefined}>Classes</button>
+                <button className={`sidebar-sub-item${tab === 'people-teachers' ? ' active' : ''}`} onClick={() => changeTab('people-teachers')} style={creditExpired ? { opacity: 0.5 } : undefined}>Teachers</button>
+                <button className={`sidebar-sub-item${tab === 'team' ? ' active' : ''}`} onClick={() => changeTab('team')} style={creditExpired ? { opacity: 0.5 } : undefined}>Team Management</button>
+                <button className={`sidebar-sub-item${tab === 'extra-fees' ? ' active' : ''}`} onClick={() => changeTab('extra-fees')} style={creditExpired ? { opacity: 0.5 } : undefined}>Extra Fees</button>
               </div>
             </div>
           </div>
@@ -347,7 +363,7 @@ export const Dashboard = () => {
 
         {/* Bottom */}
         <div className="sidebar-bottom">
-          <button className="sidebar-nav-item buy-credit-link" onClick={() => setTab('buy')}>
+          <button className="sidebar-nav-item buy-credit-link" onClick={() => changeTab('buy')}>
             <CreditCard size={16} /> Buy Credits
           </button>
           <button className="sidebar-logout" onClick={handleLogout}>
@@ -373,7 +389,7 @@ export const Dashboard = () => {
               </span>
             )}
             {tab !== 'buy' && (
-              <Button size="sm" variant="outline" onClick={() => setTab('buy')}>
+              <Button size="sm" variant="outline" onClick={() => changeTab('buy')}>
                 <CreditCard size={14} /> {creditExpired ? 'Reactivate' : `${profile.total_credits} credits · ${daysLeft}d left`}
               </Button>
             )}
@@ -415,28 +431,28 @@ export const Dashboard = () => {
               <div className="overview-hero-actions">
                 <h3 className="overview-hero-title">Quick Actions</h3>
                 <div className="hero-actions">
-                  <button className="hero-action-btn purple" onClick={() => setTab('people-parents')}>
+                  <button className="hero-action-btn purple" onClick={() => changeTab('people-parents')}>
                     <div className="hero-action-icon"><Users2 size={28} /></div>
                     <div className="hero-action-content">
                       <span className="hero-action-label">Add Parent</span>
                       <span className="hero-action-sub">Register a guardian</span>
                     </div>
                   </button>
-                  <button className="hero-action-btn blue" onClick={() => setTab('people-students')}>
+                  <button className="hero-action-btn blue" onClick={() => changeTab('people-students')}>
                     <div className="hero-action-icon"><GraduationCap size={28} /></div>
                     <div className="hero-action-content">
                       <span className="hero-action-label">Add Student</span>
                       <span className="hero-action-sub">Enroll a student</span>
                     </div>
                   </button>
-                  <button className="hero-action-btn rose" onClick={() => setTab('fees-payment')}>
+                  <button className="hero-action-btn rose" onClick={() => changeTab('fees-payment')}>
                     <div className="hero-action-icon"><Receipt size={28} /></div>
                     <div className="hero-action-content">
                       <span className="hero-action-label">Collect Fee</span>
                       <span className="hero-action-sub">Record a payment</span>
                     </div>
                   </button>
-                  <button className="hero-action-btn cyan" onClick={() => setTab('finances-income')}>
+                  <button className="hero-action-btn cyan" onClick={() => changeTab('finances-income')}>
                     <div className="hero-action-icon"><DollarSign size={28} /></div>
                     <div className="hero-action-content">
                       <span className="hero-action-label">Record Income</span>
@@ -458,7 +474,7 @@ export const Dashboard = () => {
                   if (targetTab === 'print' as any) {
                     setShowPrinterOverlay(true);
                   } else {
-                    setTab(targetTab as any);
+                    changeTab(targetTab as any);
                   }
                 }}
               />
