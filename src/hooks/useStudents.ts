@@ -22,7 +22,18 @@ export type Student = {
 };
 
 export type Class = { id: string; name: string; monthly_fee: number; active: boolean; };
-export type Parent = { id: string; first_name: string; last_name: string; };
+export type Parent = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  cnic?: string;
+  contact?: string;
+  address?: string | null;
+  notes?: string | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
 
 export const fetchSchoolData = async (schoolId: string) => {
   if (!schoolId) return { students: [], classes: [], parents: [] };
@@ -34,7 +45,7 @@ export const fetchSchoolData = async (schoolId: string) => {
   ] = await Promise.all([
     supabase.from('students').select('id, school_id, first_name, last_name, gender, cnic, date_of_birth, date_of_admission, admission_class_id, current_class_id, monthly_fee, current_monthly_fee, discount_type, discount_value, active, parent_id').eq('school_id', schoolId).order('first_name'),
     supabase.from('classes').select('id, name, monthly_fee, active').eq('school_id', schoolId).eq('active', true).order('name'),
-    supabase.from('parents').select('id, first_name, last_name').eq('school_id', schoolId).eq('is_active', true).order('first_name'),
+    supabase.from('parents').select('id, first_name, last_name, cnic, contact, address, notes, is_active, created_at, updated_at').eq('school_id', schoolId).eq('is_active', true).order('first_name'),
   ]);
 
   if (sErr) throw sErr;

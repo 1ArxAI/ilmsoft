@@ -283,10 +283,10 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
     if (!debouncedSearch.trim()) return records;
     const q = debouncedSearch.toLowerCase();
     return records.filter(r =>
-      r.first_name.toLowerCase().includes(q) ||
-      r.last_name.toLowerCase().includes(q) ||
-      r.cnic.includes(q) ||
-      r.contact?.includes(q)
+      (r.first_name || '').toLowerCase().includes(q) ||
+      (r.last_name || '').toLowerCase().includes(q) ||
+      (r.cnic || '').includes(q) ||
+      (r.contact || '').includes(q)
     );
   }, [records, debouncedSearch]);
 
