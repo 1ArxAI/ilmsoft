@@ -269,7 +269,7 @@ export const ParentDetailView = ({
 
           {/* Children section */}
           <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Active Enrolled Children</h3>
+            <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Enrolled Children</h3>
             {children.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>No children enrolled yet.</div>
             ) : (
@@ -277,7 +277,7 @@ export const ParentDetailView = ({
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Student Name</th><th>Gender</th><th>Class</th><th>Status</th><th>Gross Fee</th><th>Discount</th><th>Net Fee</th>{isOwner && <th style={{ textAlign: 'right' }}>Actions</th>}
+                      <th>Student Name</th><th>Gender</th><th>Class</th><th>Gross Fee</th><th>Discount</th><th>Net Fee</th>{isOwner && <th style={{ textAlign: 'right' }}>Actions</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -287,14 +287,9 @@ export const ParentDetailView = ({
                       const disc = gross - net;
                       return (
                         <tr key={child.id}>
-                          <td style={{ fontWeight: 600 }}>{child.first_name} {child.last_name}</td>
+                          <td style={{ fontWeight: 600, color: child.active ? 'var(--success)' : 'var(--danger)' }}>{child.first_name} {child.last_name}</td>
                           <td>{child.gender || '—'}</td>
                           <td>{getClassName(child.current_class_id)}</td>
-                          <td>
-                            <span className={`status-pill ${child.active ? 'approved' : 'rejected'}`} style={{ fontSize: '10px' }}>
-                              {child.active ? 'Active' : 'Deactivated'}
-                            </span>
-                          </td>
                           <td>Rs. {gross.toLocaleString()}</td>
                           <td style={{ color: disc > 0 ? 'var(--success)' : 'inherit' }}>
                             {disc > 0 ? `-Rs. ${disc.toLocaleString()}` : '—'}
