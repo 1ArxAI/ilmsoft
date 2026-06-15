@@ -495,6 +495,13 @@ export const FeeStatsManager = ({
                     <td>
                       <div className="fss-actions">
                         <button 
+                          className="fss-action-btn profile"
+                          onClick={() => onAction(row.id, 'people-parents')}
+                          title="View Parent Profile"
+                        >
+                          View Profile
+                        </button>
+                        <button 
                           className="fss-action-btn collect"
                           onClick={() => onAction(row.id, 'fees-payment')}
                           title="Collect Payment"

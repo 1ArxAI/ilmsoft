@@ -486,6 +486,19 @@
   transform: translateY(-1px);
 }
 
+.fss-action-btn.profile {
+  background: var(--surface);
+  border-color: var(--info);
+  color: var(--info);
+}
+
+.fss-action-btn.profile:hover {
+  background: var(--info);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+}
+
 .fss-action-btn.print {
   background: var(--surface);
   border-color: var(--secondary);

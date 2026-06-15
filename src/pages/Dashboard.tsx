@@ -481,7 +481,16 @@ export const Dashboard = () => {
             </Suspense>
           )}
           {tab === 'classes' && <Suspense fallback={<ManagerFallback />}><ClassesManager schoolId={profile.id} role={role || undefined} /></Suspense>}
-          {tab === 'people-parents' && <Suspense fallback={<ManagerFallback />}><ParentsManager schoolId={profile.id} role={role || undefined} /></Suspense>}
+          {tab === 'people-parents' && (
+            <Suspense fallback={<ManagerFallback />}>
+              <ParentsManager 
+                schoolId={profile.id} 
+                role={role || undefined} 
+                initialViewParentId={focusedParentId || undefined}
+                onClearInitialParent={() => setFocusedParentId(null)}
+              />
+            </Suspense>
+          )}
           {tab === 'people-students' && <Suspense fallback={<ManagerFallback />}><StudentsManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'people-teachers' && <Suspense fallback={<ManagerFallback />}><TeachersManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'finances-income' && <Suspense fallback={<ManagerFallback />}><IncomeManager schoolId={profile.id} role={role || undefined} /></Suspense>}

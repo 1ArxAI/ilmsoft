@@ -25,7 +25,17 @@ const EMPTY_STUDENT = { first_name: '', last_name: '', cnic: '', date_of_birth: 
 
 const PAGE_SIZE = 25;
 
-export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
+export const ParentsManager = ({ 
+  schoolId, 
+  role,
+  initialViewParentId,
+  onClearInitialParent
+}: { 
+  schoolId: string; 
+  role?: Role;
+  initialViewParentId?: string;
+  onClearInitialParent?: () => void;
+}) => {
   const isOwner = !role || role === 'owner';
   const { flash, showFlash } = useFlashMessage(4000);
   
@@ -52,6 +62,19 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
   const [savingChild, setSavingChild] = useState(false);
   const [viewTarget, setViewTarget] = useState<Parent | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
+
+  // Handle initial parent view redirect (e.g. from Arrears page click)
+  useEffect(() => {
+    if (initialViewParentId && records.length > 0 && !viewTarget) {
+      const target = records.find(p => p.id === initialViewParentId);
+      if (target) {
+        setViewTarget(target);
+        if (onClearInitialParent) {
+          onClearInitialParent();
+        }
+      }
+    }
+  }, [initialViewParentId, records, viewTarget, onClearInitialParent]);
 
   const set = (k: string, v: string) => {
     setForm(f => ({ ...f, [k]: v }));
@@ -379,7 +402,6 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
                 discountTotals={discountTotals}
                 isOwner={isOwner}
                 onAddChild={openAddChild}
-                onEdit={openEdit}
                 onView={setViewTarget}
               />
 

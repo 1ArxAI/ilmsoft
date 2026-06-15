@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, UserPlus, Edit2, Eye } from 'lucide-react';
+import { GraduationCap, UserPlus, Eye } from 'lucide-react';
 import type { Parent } from '../../hooks/useParents';
 
 interface ParentTableProps {
@@ -9,7 +9,6 @@ interface ParentTableProps {
   discountTotals: Record<string, number>;
   isOwner: boolean;
   onAddChild: (p: Parent) => void;
-  onEdit: (p: Parent) => void;
   onView: (p: Parent) => void;
 }
 
@@ -20,7 +19,6 @@ export const ParentTable = React.memo<ParentTableProps>(({
   discountTotals,
   isOwner,
   onAddChild,
-  onEdit,
   onView
 }) => {
   return (
@@ -74,11 +72,6 @@ export const ParentTable = React.memo<ParentTableProps>(({
                   <button className="action-btn add-child" title="Add Child" onClick={() => onAddChild(r)}>
                     <UserPlus size={14} />
                   </button>
-                  {isOwner && (
-                    <button className="action-btn edit" title="Edit" onClick={() => onEdit(r)}>
-                      <Edit2 size={14} />
-                    </button>
-                  )}
                   <button className="action-btn view" title="View Report" onClick={() => onView(r)}>
                     <Eye size={14} />
                   </button>
