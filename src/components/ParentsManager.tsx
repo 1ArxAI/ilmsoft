@@ -14,6 +14,7 @@ import { ParentStats } from './parents/ParentStats';
 import { ParentTable } from './parents/ParentTable';
 import { ParentModal } from './parents/ParentModal';
 import { ChildModal } from './parents/ChildModal';
+import { ParentDetailView } from './parents/ParentDetailView';
 
 import '../components/managers.css';
 
@@ -49,6 +50,8 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
   const [selectedParentForChild, setSelectedParentForChild] = useState<Parent | null>(null);
   const [childForm, setChildForm] = useState({ ...EMPTY_STUDENT });
   const [savingChild, setSavingChild] = useState(false);
+  const [viewTarget, setViewTarget] = useState<Parent | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
 
   const set = (k: string, v: string) => {
     setForm(f => ({ ...f, [k]: v }));
@@ -202,6 +205,18 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
     } else {
       showFlash('Parent "' + form.first_name + ' ' + form.last_name + '" updated!');
       setShowEditModal(false);
+      if (viewTarget && viewTarget.id === editTarget.id) {
+        setViewTarget({
+          ...viewTarget,
+          first_name: form.first_name.trim(),
+          last_name: form.last_name.trim(),
+          cnic: form.cnic.trim(),
+          contact: form.contact.trim(),
+          address: form.address.trim() || null,
+          notes: form.notes.trim() || null,
+        });
+        setRefreshCount(prev => prev + 1);
+      }
       setEditTarget(null);
       setForm({ ...EMPTY });
       setCnicError('');
@@ -222,6 +237,7 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
         await supabase.from('students').update({ active: false }).eq('parent_id', deleteTarget.id);
         showFlash(`Parent "${deleteTarget.first_name} ${deleteTarget.last_name}" deactivated`);
         setDeleteTarget(null);
+        setViewTarget(null);
         load();
       }
     } catch (err: any) {
@@ -275,7 +291,12 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
       showFlash('Student "' + childForm.first_name + ' ' + childForm.last_name + '" added for ' + selectedParentForChild.first_name + '!');
       setShowChildModal(false);
       setChildForm({ ...EMPTY_STUDENT });
+      const parentId = selectedParentForChild.id;
       setSelectedParentForChild(null);
+      load();
+      if (viewTarget && viewTarget.id === parentId) {
+        setRefreshCount(prev => prev + 1);
+      }
     }
   };
 
@@ -303,66 +324,84 @@ export const ParentsManager = ({ schoolId, role }: { schoolId: string; role?: Ro
 
   return (
     <div className="manager">
-      <div className="manager-toolbar">
-        <div className="manager-title">
-          <Users size={24} />
-          <div>
-            <h3>Families & Beneficiaries</h3>
-            <p>{records.length} {records.length === 1 ? 'parent' : 'parents'} registered across all classes</p>
+      {!viewTarget && (
+        <div className="manager-toolbar">
+          <div className="manager-title">
+            <Users size={24} />
+            <div>
+              <h3>Families & Beneficiaries</h3>
+              <p>{records.length} {records.length === 1 ? 'parent' : 'parents'} registered across all classes</p>
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:'0.75rem', alignItems:'center', flexWrap:'wrap' }}>
+            <div className="manager-search-bar">
+              <Search size={16} />
+              <input placeholder="Search by name, CNIC or contact..." value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <Button onClick={() => { setForm({ ...EMPTY }); setCnicError(''); setShowModal(true); }}>
+              <Plus size={18} /> Add Parent
+            </Button>
           </div>
         </div>
-        <div style={{ display:'flex', gap:'0.75rem', alignItems:'center', flexWrap:'wrap' }}>
-          <div className="manager-search-bar">
-            <Search size={16} />
-            <input placeholder="Search by name, CNIC or contact..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <Button onClick={() => { setForm({ ...EMPTY }); setCnicError(''); setShowModal(true); }}>
-            <Plus size={18} /> Add Parent
-          </Button>
-        </div>
-      </div>
+      )}
 
-      <ParentStats stats={parentStats} />
-
-      {flash && <div className={"flash " + (flash.startsWith('Error') ? 'error' : 'success')}>{flash}</div>}
-
-      {filtered.length === 0 ? (
-        <div className="empty-state">
-          <Users size={52} />
-          <p>{records.length === 0 ? 'No parents added yet' : 'No results found'}</p>
-          <small>{records.length === 0 ? 'Click "Add Parent" to register the first parent' : ''}</small>
-          {records.length === 0 && <Button onClick={() => { setForm({ ...EMPTY }); setCnicError(''); setShowModal(true); }}><Plus size={18} /> Add First Parent</Button>}
-        </div>
+      {viewTarget ? (
+        <ParentDetailView
+          key={`${viewTarget.id}-${refreshCount}`}
+          parent={viewTarget}
+          classes={classes}
+          onBack={() => setViewTarget(null)}
+          onAddChild={openAddChild}
+          onEdit={openEdit}
+          onDelete={setDeleteTarget}
+          isOwner={isOwner}
+          onPaymentRecorded={load}
+        />
       ) : (
         <>
-          <ParentTable 
-            records={paginated}
-            studentCounts={studentCounts}
-            monthlyTotals={monthlyTotals}
-            discountTotals={discountTotals}
-            isOwner={isOwner}
-            onAddChild={openAddChild}
-            onEdit={openEdit}
-            onDelete={setDeleteTarget}
-          />
+          <ParentStats stats={parentStats} />
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <span className="pagination-info">
-                Showing {(page-1)*PAGE_SIZE + 1}-{Math.min(page*PAGE_SIZE, filtered.length)} of {filtered.length}
-              </span>
-              <div className="pagination-controls">
-                <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p-1)}>
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i+1).map(p => (
-                  <button key={p} className={"page-btn" + (p === page ? ' active' : '')} onClick={() => setPage(p)}>{p}</button>
-                ))}
-                <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p+1)}>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+          {flash && <div className={"flash " + (flash.startsWith('Error') ? 'error' : 'success')}>{flash}</div>}
+
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <Users size={52} />
+              <p>{records.length === 0 ? 'No parents added yet' : 'No results found'}</p>
+              <small>{records.length === 0 ? 'Click "Add Parent" to register the first parent' : ''}</small>
+              {records.length === 0 && <Button onClick={() => { setForm({ ...EMPTY }); setCnicError(''); setShowModal(true); }}><Plus size={18} /> Add First Parent</Button>}
             </div>
+          ) : (
+            <>
+              <ParentTable 
+                records={paginated}
+                studentCounts={studentCounts}
+                monthlyTotals={monthlyTotals}
+                discountTotals={discountTotals}
+                isOwner={isOwner}
+                onAddChild={openAddChild}
+                onEdit={openEdit}
+                onView={setViewTarget}
+              />
+
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <span className="pagination-info">
+                    Showing {(page-1)*PAGE_SIZE + 1}-{Math.min(page*PAGE_SIZE, filtered.length)} of {filtered.length}
+                  </span>
+                  <div className="pagination-controls">
+                    <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p-1)}>
+                      <ChevronLeft size={16} />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i+1).map(p => (
+                      <button key={p} className={"page-btn" + (p === page ? ' active' : '')} onClick={() => setPage(p)}>{p}</button>
+                    ))}
+                    <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p+1)}>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, UserPlus, Edit2, Trash2 } from 'lucide-react';
+import { GraduationCap, UserPlus, Edit2, Eye } from 'lucide-react';
 import type { Parent } from '../../hooks/useParents';
 
 interface ParentTableProps {
@@ -10,7 +10,7 @@ interface ParentTableProps {
   isOwner: boolean;
   onAddChild: (p: Parent) => void;
   onEdit: (p: Parent) => void;
-  onDelete: (p: Parent) => void;
+  onView: (p: Parent) => void;
 }
 
 export const ParentTable = React.memo<ParentTableProps>(({
@@ -21,7 +21,7 @@ export const ParentTable = React.memo<ParentTableProps>(({
   isOwner,
   onAddChild,
   onEdit,
-  onDelete
+  onView
 }) => {
   return (
     <div className="table-wrap">
@@ -79,11 +79,9 @@ export const ParentTable = React.memo<ParentTableProps>(({
                       <Edit2 size={14} />
                     </button>
                   )}
-                  {isOwner && (
-                    <button className="action-btn delete" title="Delete" onClick={() => onDelete(r)}>
-                      <Trash2 size={14} />
-                    </button>
-                  )}
+                  <button className="action-btn view" title="View Report" onClick={() => onView(r)}>
+                    <Eye size={14} />
+                  </button>
                 </div>
               </td>
             </tr>
