@@ -3,11 +3,10 @@ import { supabase } from '../../lib/supabase';
 import type { Parent, Class } from '../../hooks/useParents';
 import { Button } from '../ui/Button';
 import { 
-  ArrowLeft, Phone, CreditCard, GraduationCap, Plus, Trash2, 
-  Loader2, DollarSign, Printer, Clock, FileText, CheckCircle, AlertCircle
+  ArrowLeft, GraduationCap, Plus, Trash2, 
+  Loader2, DollarSign, Printer, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { useFlashMessage } from '../../hooks/useFlashMessage';
-import { isValidPhone } from '../../lib/validation';
 
 interface ParentDetailViewProps {
   parent: Parent;
