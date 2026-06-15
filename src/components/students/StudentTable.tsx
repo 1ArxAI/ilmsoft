@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Edit2, Trash2 } from 'lucide-react';
+import { BookOpen, Edit2, Eye } from 'lucide-react';
 import type { Student } from '../../hooks/useStudents';
 
 interface StudentTableProps {
@@ -9,7 +9,7 @@ interface StudentTableProps {
   getClassName: (id: string | null) => string;
   getParentName: (id: string) => string;
   onEdit: (s: Student) => void;
-  onDelete: (s: Student) => void;
+  onViewParent: (parentId: string) => void;
 }
 
 export const StudentTable = React.memo<StudentTableProps>(({
@@ -19,7 +19,7 @@ export const StudentTable = React.memo<StudentTableProps>(({
   getClassName,
   getParentName,
   onEdit,
-  onDelete
+  onViewParent
 }) => {
   return (
     <div className="table-wrap">
@@ -99,11 +99,9 @@ export const StudentTable = React.memo<StudentTableProps>(({
                         <Edit2 size={14} />
                       </button>
                     )}
-                    {isOwner && (
-                      <button className="action-btn delete" title="Delete" onClick={() => onDelete(s)}>
-                        <Trash2 size={14} />
-                      </button>
-                    )}
+                    <button className="action-btn view" title="View Parent Profile" onClick={() => onViewParent(s.parent_id)}>
+                      <Eye size={14} />
+                    </button>
                   </div>
                 </td>
               )}

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { useDebounce } from '../hooks/useDebounce';
-import { GraduationCap, Search, Settings, Plus, Trash2, Check, BookOpen, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react';
+import { GraduationCap, Search, Settings, Plus, Check, BookOpen, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useStudents } from '../hooks/useStudents';
 import type { Student } from '../hooks/useStudents';
@@ -25,7 +25,15 @@ const EMPTY_FORM = {
 
 const PAGE_SIZE = 25;
 
-export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
+export const StudentsManager = ({ 
+  schoolId, 
+  role,
+  onViewParent
+}: { 
+  schoolId: string; 
+  role?: Role;
+  onViewParent?: (parentId: string) => void;
+}) => {
   const isOwner = !role || role === 'owner';
   const { flash, showFlash } = useFlashMessage();
   const [search, setSearch] = useState('');
@@ -34,8 +42,6 @@ export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: R
   const [saving, setSaving] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(1);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   
@@ -79,18 +85,7 @@ export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: R
     setShowModal(true);
   }, []);
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      const { error } = await supabase.from('students').update({ active: false }).eq('id', deleteTarget.id);
-      if (error) throw error;
-      showFlash(`Student "${deleteTarget.first_name}" deactivated`);
-      setDeleteTarget(null); load();
-    } catch (err: any) {
-      showFlash('Error: ' + err.message);
-    } finally { setDeleting(false); }
-  };
+
 
   const handleSave = async () => {
     if (!form.parent_id || !form.first_name.trim() || !form.last_name.trim()) {
@@ -205,7 +200,7 @@ export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: R
           <StudentTable 
             students={paginated} visibleColumns={visibleColumns} isOwner={isOwner} 
             getClassName={getClassName} getParentName={getParentName}
-            onEdit={openEdit} onDelete={setDeleteTarget}
+            onEdit={openEdit} onViewParent={onViewParent || (() => {})}
           />
 
           {totalPages > 1 && (
@@ -233,19 +228,7 @@ export const StudentsManager = ({ schoolId, role }: { schoolId: string; role?: R
         />
       )}
 
-      {deleteTarget && (
-        <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setDeleteTarget(null)}>
-          <div className="confirm-box">
-            <Trash2 size={40} color="var(--danger)" />
-            <h3>Remove Student?</h3>
-            <p>This will permanently remove <strong>{deleteTarget.first_name} {deleteTarget.last_name}</strong> from enrollment records.</p>
-            <div className="confirm-box-btns">
-              <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-              <Button variant="danger" onClick={handleDelete} isLoading={deleting}>Remove</Button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };
