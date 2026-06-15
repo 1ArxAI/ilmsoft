@@ -10,8 +10,8 @@ import { Input } from '../components/ui/Input';
 import {
   LayoutDashboard, GraduationCap, DollarSign,
   Users2, CreditCard, History as HistoryIcon, LogOut, AlertTriangle, Clock,
-  CheckCircle, XCircle, BookOpen,
-  Receipt, Banknote, ChevronDown, Settings, BarChart2, Calendar
+  CheckCircle, XCircle,
+  Receipt, Banknote, ChevronDown, Settings, BarChart2, Calendar, TrendingDown
 } from 'lucide-react';
 import './Dashboard.css';
 
@@ -100,7 +100,6 @@ export const Dashboard = () => {
   const [history, setHistory] = useState<any[]>([]);
   const [creditExpired, setCreditExpired] = useState(false);
   const [daysLeft, setDaysLeft] = useState(0);
-  const [overviewStats, setOverviewStats] = useState({ parents: 0, students: 0, classes: 0 });
   const [focusedParentId, setFocusedParentId] = useState<string | null>(null);
   const [showPrinterOverlay, setShowPrinterOverlay] = useState(false);
   const [showReceiptOverlay, setShowReceiptOverlay] = useState(false);
@@ -127,25 +126,6 @@ export const Dashboard = () => {
     if (expired || profile.total_credits <= 0) setTab('buy');
   }, [profile]);
 
-  const loadOverviewStats = useCallback(async () => {
-    if (!profile) return;
-    try {
-      const [parentsRes, studentsRes, classesRes] = await Promise.all([
-        supabase.from('parents').select('id', { count: 'exact', head: true }).eq('school_id', profile.id),
-        supabase.from('students').select('id', { count: 'exact', head: true }).eq('school_id', profile.id),
-        supabase.from('classes').select('id', { count: 'exact', head: true }).eq('school_id', profile.id),
-      ]);
-      setOverviewStats({
-        parents: parentsRes.count || 0,
-        students: studentsRes.count || 0,
-        classes: classesRes.count || 0,
-      });
-    } catch (err: any) {
-      console.error('Error loading overview stats:', err);
-      setMsg({ text: 'Failed to load dashboard statistics', type: 'error' });
-      setOverviewStats({ parents: 0, students: 0, classes: 0 });
-    }
-  }, [profile]);
 
   const loadAdminSettings = useCallback(async () => {
     if (!profile) return;
@@ -175,7 +155,7 @@ export const Dashboard = () => {
     }
   }, [profile]);
 
-  useEffect(() => { if (profile) { checkCredits(); loadOverviewStats(); loadAdminSettings(); } }, [profile, checkCredits, loadOverviewStats, loadAdminSettings]);
+  useEffect(() => { if (profile) { checkCredits(); loadAdminSettings(); } }, [profile, checkCredits, loadAdminSettings]);
   useEffect(() => { if (tab === 'history' && profile) loadHistory(); }, [tab, profile, loadHistory]);
   useEffect(() => { if (tab === 'buy') loadAdminSettings(); }, [tab, loadAdminSettings]);
   useEffect(() => {
@@ -409,59 +389,53 @@ export const Dashboard = () => {
                 <h2>Welcome, {profile.school_name} 👋</h2>
               </div>
 
-              <div className="overview-stats">
-                <div className="ov-stat-card blue">
-                  <div className="ov-stat-icon"><Users2 size={20} /></div>
-                  <div className="ov-stat-label">Parents</div>
-                  <div className="ov-stat-value">{overviewStats.parents}</div>
-                  <div className="ov-stat-sub">Registered guardians</div>
-                </div>
-                <div className="ov-stat-card green">
-                  <div className="ov-stat-icon"><GraduationCap size={20} /></div>
-                  <div className="ov-stat-label">Students</div>
-                  <div className="ov-stat-value">{overviewStats.students}</div>
-                  <div className="ov-stat-sub">Enrolled students</div>
-                </div>
-                <div className="ov-stat-card purple">
-                  <div className="ov-stat-icon"><BookOpen size={20} /></div>
-                  <div className="ov-stat-label">Classes</div>
-                  <div className="ov-stat-value">{overviewStats.classes}</div>
-                  <div className="ov-stat-sub">Active classes</div>
-                </div>
-              </div>
-
               {/* Quick Actions - Hero Section */}
-              <div className="overview-hero-actions">
-                <h3 className="overview-hero-title">Quick Actions</h3>
-                <div className="hero-actions">
-                  <button className="hero-action-btn purple" onClick={() => changeTab('people-parents')}>
-                    <div className="hero-action-icon"><Users2 size={28} /></div>
-                    <div className="hero-action-content">
-                      <span className="hero-action-label">Add Parent</span>
-                      <span className="hero-action-sub">Register a guardian</span>
-                    </div>
-                  </button>
-                  <button className="hero-action-btn blue" onClick={() => changeTab('people-students')}>
-                    <div className="hero-action-icon"><GraduationCap size={28} /></div>
-                    <div className="hero-action-content">
-                      <span className="hero-action-label">Add Student</span>
-                      <span className="hero-action-sub">Enroll a student</span>
-                    </div>
-                  </button>
-                  <button className="hero-action-btn rose" onClick={() => changeTab('fees-payment')}>
-                    <div className="hero-action-icon"><Receipt size={28} /></div>
-                    <div className="hero-action-content">
-                      <span className="hero-action-label">Collect Fee</span>
-                      <span className="hero-action-sub">Record a payment</span>
-                    </div>
-                  </button>
-                  <button className="hero-action-btn cyan" onClick={() => changeTab('finances-income')}>
-                    <div className="hero-action-icon"><DollarSign size={28} /></div>
-                    <div className="hero-action-content">
-                      <span className="hero-action-label">Record Income</span>
-                      <span className="hero-action-sub">Log other income</span>
-                    </div>
-                  </button>
+              <div className="overview-hero-actions" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.5rem' }}>
+                <div>
+                  <h3 className="overview-hero-title">Registration</h3>
+                  <div className="hero-actions grid-2">
+                    <button className="hero-action-btn purple" onClick={() => changeTab('people-parents')}>
+                      <div className="hero-action-icon"><Users2 size={28} /></div>
+                      <div className="hero-action-content">
+                        <span className="hero-action-label">Add Parent</span>
+                        <span className="hero-action-sub">Register a guardian</span>
+                      </div>
+                    </button>
+                    <button className="hero-action-btn blue" onClick={() => changeTab('people-parents')}>
+                      <div className="hero-action-icon"><GraduationCap size={28} /></div>
+                      <div className="hero-action-content">
+                        <span className="hero-action-label">Add Student</span>
+                        <span className="hero-action-sub">Enroll a student</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="overview-hero-title">Finances</h3>
+                  <div className="hero-actions grid-3">
+                    <button className="hero-action-btn rose" onClick={() => changeTab('fees-payment')}>
+                      <div className="hero-action-icon"><Receipt size={28} /></div>
+                      <div className="hero-action-content">
+                        <span className="hero-action-label">Collect Fee</span>
+                        <span className="hero-action-sub">Record a payment</span>
+                      </div>
+                    </button>
+                    <button className="hero-action-btn cyan" onClick={() => changeTab('finances-income')}>
+                      <div className="hero-action-icon"><DollarSign size={28} /></div>
+                      <div className="hero-action-content">
+                        <span className="hero-action-label">Record Income</span>
+                        <span className="hero-action-sub">Log other income</span>
+                      </div>
+                    </button>
+                    <button className="hero-action-btn orange" onClick={() => changeTab('finances-expense')}>
+                      <div className="hero-action-icon"><TrendingDown size={28} /></div>
+                      <div className="hero-action-content">
+                        <span className="hero-action-label">Record Expense</span>
+                        <span className="hero-action-sub">Log school expenses</span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

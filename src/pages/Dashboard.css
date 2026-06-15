@@ -279,6 +279,14 @@
   gap: 1rem;
 }
 
+.hero-actions.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.hero-actions.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .hero-action-btn {
   display: flex;
   align-items: center;
@@ -304,6 +312,7 @@
 .hero-action-btn.blue:hover   { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.4); }
 .hero-action-btn.rose:hover    { background: rgba(244,63,94,0.12); border-color: rgba(244,63,94,0.4); }
 .hero-action-btn.cyan:hover   { background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.4); }
+.hero-action-btn.orange:hover { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.4); }
 
 .hero-action-icon {
   width: 52px; height: 52px;
@@ -316,6 +325,7 @@
 .hero-action-btn.blue .hero-action-icon   { background: rgba(99,102,241,0.15); color: #818cf8; }
 .hero-action-btn.rose .hero-action-icon   { background: rgba(244,63,94,0.15); color: #fb7185; }
 .hero-action-btn.cyan .hero-action-icon   { background: rgba(6,182,212,0.15); color: #22d3ee; }
+.hero-action-btn.orange .hero-action-icon { background: rgba(249,115,22,0.15); color: #fb923c; }
 
 .hero-action-content {
   display: flex;
@@ -582,7 +592,7 @@
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .hero-actions { grid-template-columns: repeat(2, 1fr); }
+  .hero-actions, .hero-actions.grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
@@ -601,7 +611,7 @@
 @media (max-width: 480px) {
   .overview-stats { grid-template-columns: 1fr 1fr; }
   .quick-actions  { grid-template-columns: 1fr 1fr; }
-  .hero-actions { grid-template-columns: 1fr; }
+  .hero-actions, .hero-actions.grid-2, .hero-actions.grid-3 { grid-template-columns: 1fr; }
   .hero-action-btn { min-height: 80px; }
 }
 
