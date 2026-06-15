@@ -226,7 +226,7 @@ export const FeeStatsManager = ({
           .select(`
             parent_id,
             balance,
-            parents:parent_id(first_name, last_name, contact)
+            parents:parent_id(first_name, last_name, contact, is_active)
           `)
           .eq('school_id', schoolId)
       ]);
@@ -303,6 +303,7 @@ export const FeeStatsManager = ({
 
       /* ── Outstanding Dues ── */
       const duesRows: ParentDuesRow[] = parentBalances
+        .filter((b: any) => b.parents && b.parents.is_active !== false)
         .map((b: any) => {
           const p = b.parents;
           // In our ledger, balance < 0 means dues. We convert to positive for display.

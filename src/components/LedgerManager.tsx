@@ -87,6 +87,7 @@ export const LedgerManager = ({
           )
         `)
         .eq('school_id', schoolId)
+        .eq('is_active', true)
         .or(`first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,contact.ilike.%${debouncedSearch}%`)
         .order('first_name');
 

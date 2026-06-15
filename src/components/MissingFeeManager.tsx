@@ -68,6 +68,7 @@ export const MissingFeeManager = ({ schoolId }: { schoolId: string }) => {
           )
         `)
         .eq('school_id', schoolId)
+        .eq('is_active', true)
         .eq('students.active', true);
         
       if (error) throw error;

@@ -38,6 +38,7 @@ const FeeGenerationManager = lazy(() => import('../components/FeeGenerationManag
 const LedgerManager = lazy(() => import('../components/LedgerManager').then(m => ({ default: m.LedgerManager })));
 const MissingFeeManager = lazy(() => import('../components/MissingFeeManager').then(m => ({ default: m.MissingFeeManager })));
 const PaymentPortalV2 = lazy(() => import('../components/PaymentPortalV2').then(m => ({ default: m.PaymentPortalV2 })));
+const ArchiveManager = lazy(() => import('../components/ArchiveManager').then(m => ({ default: m.ArchiveManager })));
 
 // Loading fallback for lazy components
 const ManagerFallback = () => (
@@ -47,7 +48,7 @@ const ManagerFallback = () => (
   </div>
 );
 
-type Tab = 'overview' | 'fee-stats' | 'classes' | 'people' | 'people-students' | 'people-parents' | 'people-teachers' | 'finances' | 'finances-income' | 'finances-expense' | 'finances-suppliers' | 'finances-extra-fees' | 'finances-custom-receipt' | 'team' | 'profile' | 'extra-fees' | 'buy' | 'history' | 'fees-generate' | 'fees-view' | 'fees-payment' | 'fees-missing' | 'exams-terms' | 'exams-promotion' | 'exams-results' | 'exams-results-cards';
+type Tab = 'overview' | 'fee-stats' | 'classes' | 'people' | 'people-students' | 'people-parents' | 'people-teachers' | 'people-archive' | 'finances' | 'finances-income' | 'finances-expense' | 'finances-suppliers' | 'finances-extra-fees' | 'finances-custom-receipt' | 'team' | 'profile' | 'extra-fees' | 'buy' | 'history' | 'fees-generate' | 'fees-view' | 'fees-payment' | 'fees-missing' | 'exams-terms' | 'exams-promotion' | 'exams-results' | 'exams-results-cards';
 
 const PAGE_TITLES: Record<Tab, string> = {
   overview: '',
@@ -62,6 +63,7 @@ const PAGE_TITLES: Record<Tab, string> = {
   'people-parents': 'Parents & Guardians',
   'people-students': 'Students',
   'people-teachers': 'Teachers',
+  'people-archive': 'Deactivated Records',
   finances: 'Finances',
   'finances-income': 'Income',
   'finances-expense': 'Expenses',
@@ -262,6 +264,7 @@ export const Dashboard = () => {
               <div className="sidebar-sub-items">
                 <button className={`sidebar-sub-item${tab === 'people-parents' ? ' active' : ''}`} onClick={() => changeTab('people-parents')} style={creditExpired ? { opacity: 0.5 } : undefined}>Parents & Guardians</button>
                 <button className={`sidebar-sub-item${tab === 'people-students' ? ' active' : ''}`} onClick={() => changeTab('people-students')} style={creditExpired ? { opacity: 0.5 } : undefined}>Students</button>
+                <button className={`sidebar-sub-item${tab === 'people-archive' ? ' active' : ''}`} onClick={() => changeTab('people-archive')} style={creditExpired ? { opacity: 0.5 } : undefined}>Deactivated Records</button>
               </div>
             </div>
           </div>
@@ -493,6 +496,11 @@ export const Dashboard = () => {
           )}
           {tab === 'people-students' && <Suspense fallback={<ManagerFallback />}><StudentsManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'people-teachers' && <Suspense fallback={<ManagerFallback />}><TeachersManager schoolId={profile.id} role={role || undefined} /></Suspense>}
+          {tab === 'people-archive' && (
+            <Suspense fallback={<ManagerFallback />}>
+              <ArchiveManager schoolId={profile.id} role={role || undefined} />
+            </Suspense>
+          )}
           {tab === 'finances-income' && <Suspense fallback={<ManagerFallback />}><IncomeManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'finances-expense' && <Suspense fallback={<ManagerFallback />}><ExpenseManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'finances-suppliers' && <Suspense fallback={<ManagerFallback />}><SuppliersManager schoolId={profile.id} role={role || undefined} /></Suspense>}
