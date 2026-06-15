@@ -35,11 +35,15 @@ interface LedgerEntry {
 export const LedgerManager = ({ 
   schoolId,
   initialParentId,
-  onPrintReceipt
+  onPrintReceipt,
+  onClearInitialParent,
+  onBack
 }: { 
   schoolId: string;
   initialParentId?: string;
   onPrintReceipt?: (pid: string) => void;
+  onClearInitialParent?: () => void;
+  onBack?: () => void;
 }) => {
   const { flash, showFlash } = useFlashMessage();
   const [loading, setLoading] = useState(true);
@@ -343,8 +347,12 @@ export const LedgerManager = ({
         </div>
       ) : (
         <div className="record-card" style={{ gridColumn: 'span 3', display: 'block' }}>
-          <Button variant="ghost" onClick={() => setSelectedParent(null)} style={{ marginBottom: '1rem' }}>
-            <ArrowLeft size={18} /> Back to List
+          <Button variant="ghost" onClick={() => {
+            setSelectedParent(null);
+            if (onClearInitialParent) onClearInitialParent();
+            if (onBack) onBack();
+          }} style={{ marginBottom: '1rem' }}>
+            <ArrowLeft size={18} /> {onBack ? 'Back to Fee Stats' : 'Back to List'}
           </Button>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', padding: '1rem', background: 'var(--bg)', borderRadius: 'var(--radius-lg)' }}>

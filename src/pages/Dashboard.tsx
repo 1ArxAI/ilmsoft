@@ -524,6 +524,8 @@ export const Dashboard = () => {
               <LedgerManager 
                 schoolId={profile.id} 
                 initialParentId={focusedParentId || undefined}
+                onClearInitialParent={() => setFocusedParentId(null)}
+                onBack={focusedParentId ? () => changeTab('fee-stats') : undefined}
                 onPrintReceipt={(pid) => {
                   setActivePaymentId(pid);
                   setShowReceiptOverlay(true);
