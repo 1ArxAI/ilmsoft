@@ -590,20 +590,70 @@
 .section-empty svg { opacity: 0.3; }
 .section-empty p { font-size: var(--font-lg); font-weight: 600; }
 
+/* Mobile Menu Toggle & Backdrop */
+.mobile-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 140;
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .hero-actions, .hero-actions.grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .dash-shell { flex-direction: column; height: auto; min-height: 100vh; }
-  .dash-sidebar { width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; }
-  .sidebar-logo { flex: 0 0 auto; }
-  .sidebar-nav { flex-direction: row; flex-wrap: wrap; padding: 0.5rem; flex: 1; }
-  .sidebar-nav-item { min-height: 38px; font-size: var(--font-xs); gap: 6px; padding: 0.5rem 0.75rem; flex: 0 0 auto; }
-  .sidebar-bottom { display: none; }
-  .dash-main { overflow: visible; }
-  .dash-content { overflow: visible; padding: 1rem; }
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  .dash-topbar {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
+  .dash-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    min-width: 280px;
+    z-index: 150;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-xl);
+    background: var(--sidebar-bg);
+  }
+  .dash-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .dash-main {
+    height: 100vh;
+  }
+  .dash-content {
+    padding: 1rem;
+  }
   .pricing-grid { grid-template-columns: 1fr; }
   .quick-actions { grid-template-columns: 1fr 1fr; }
 }

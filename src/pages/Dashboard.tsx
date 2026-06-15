@@ -11,7 +11,8 @@ import {
   LayoutDashboard, GraduationCap, DollarSign,
   Users2, CreditCard, History as HistoryIcon, LogOut, AlertTriangle, Clock,
   CheckCircle, XCircle,
-  Receipt, Banknote, ChevronDown, Settings, BarChart2, Calendar, TrendingDown
+  Receipt, Banknote, ChevronDown, Settings, BarChart2, Calendar, TrendingDown,
+  Menu, X
 } from 'lucide-react';
 import './Dashboard.css';
 
@@ -105,8 +106,10 @@ export const Dashboard = () => {
   const [showReceiptOverlay, setShowReceiptOverlay] = useState(false);
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
   const [adminSettings, setAdminSettings] = useState<any>(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const changeTab = (t: Tab) => {
+    setMobileSidebarOpen(false);
     if (creditExpired && t !== 'buy' && t !== 'history') {
       setMsg({ text: 'Access locked: Please purchase credits first.', type: 'error' });
       setTab('buy');
@@ -202,11 +205,23 @@ export const Dashboard = () => {
 
   return (
     <div className="dash-shell">
+      {mobileSidebarOpen && (
+        <div className="mobile-nav-backdrop" onClick={() => setMobileSidebarOpen(false)} />
+      )}
       {/* ─── Sidebar ─── */}
-      <aside className="dash-sidebar">
-        <div className="sidebar-logo">
-          <div className="sidebar-logo-icon"><GraduationCap size={20} /></div>
-          <span className="sidebar-logo-text">ilm<em>soft</em></span>
+      <aside className={`dash-sidebar${mobileSidebarOpen ? ' mobile-open' : ''}`}>
+        <div className="sidebar-logo" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="sidebar-logo-icon"><GraduationCap size={20} /></div>
+            <span className="sidebar-logo-text">ilm<em>soft</em></span>
+          </div>
+          {mobileSidebarOpen && (
+            <button className="mobile-menu-close" onClick={() => setMobileSidebarOpen(false)} aria-label="Close navigation menu" style={{
+              background: 'transparent', border: 'none', color: 'var(--sidebar-text)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center'
+            }}>
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Nav */}
@@ -359,6 +374,9 @@ export const Dashboard = () => {
       <div className="dash-main">
         {/* Top bar */}
         <div className="dash-topbar">
+          <button className="mobile-menu-toggle" onClick={() => setMobileSidebarOpen(true)} aria-label="Open navigation menu">
+            <Menu size={22} />
+          </button>
           <span className="dash-topbar-title">{PAGE_TITLES[tab]}</span>
           <div className="dash-topbar-actions">
             {msg.text && (
