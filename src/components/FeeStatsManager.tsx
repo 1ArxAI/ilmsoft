@@ -173,7 +173,7 @@ export const FeeStatsManager = ({
   onAction 
 }: { 
   schoolId: string; 
-  onAction: (parentId: string, tab: 'fees-payment' | 'fees-view' | 'print') => void 
+  onAction: (parentId: string, tab: 'fees-payment' | 'fees-view' | 'print' | 'people-parents') => void 
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

@@ -7,7 +7,6 @@ interface ParentTableProps {
   studentCounts: Record<string, number>;
   monthlyTotals: Record<string, number>;
   discountTotals: Record<string, number>;
-  isOwner: boolean;
   onAddChild: (p: Parent) => void;
   onView: (p: Parent) => void;
 }
@@ -17,7 +16,6 @@ export const ParentTable = React.memo<ParentTableProps>(({
   studentCounts,
   monthlyTotals,
   discountTotals,
-  isOwner,
   onAddChild,
   onView
 }) => {

@@ -400,7 +400,6 @@ export const ParentsManager = ({
                 studentCounts={studentCounts}
                 monthlyTotals={monthlyTotals}
                 discountTotals={discountTotals}
-                isOwner={isOwner}
                 onAddChild={openAddChild}
                 onView={setViewTarget}
               />
