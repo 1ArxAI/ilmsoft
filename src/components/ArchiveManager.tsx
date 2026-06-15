@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { useFlashMessage } from '../hooks/useFlashMessage';
-import { Users, GraduationCap, Search, Loader2 } from 'lucide-react';
+import { Users, GraduationCap, Search, Loader2, Trash2 } from 'lucide-react';
 import './managers.css';
 
 interface ArchiveManagerProps {
@@ -20,6 +20,11 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
   const [parents, setParents] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+
+  // Delete state
+  const [deleteParentTarget, setDeleteParentTarget] = useState<any | null>(null);
+  const [deleteStudentTarget, setDeleteStudentTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -57,6 +62,74 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleDeleteParent = async () => {
+    if (!deleteParentTarget) return;
+    setDeleting(true);
+    try {
+      // 1. Delete discounts & monthly fees for all students of this parent
+      const { data: parentStudents } = await supabase
+        .from('students')
+        .select('id')
+        .eq('parent_id', deleteParentTarget.id);
+      
+      const studentIds = (parentStudents || []).map(s => s.id);
+      
+      if (studentIds.length > 0) {
+        await supabase.from('discounts').delete().in('student_id', studentIds);
+        await supabase.from('student_monthly_fees').delete().in('student_id', studentIds);
+        await supabase.from('students').delete().in('id', studentIds);
+      }
+      
+      // 2. Delete ledger and payments
+      await supabase.from('ledger').delete().eq('parent_id', deleteParentTarget.id);
+      await supabase.from('payments').delete().eq('parent_id', deleteParentTarget.id);
+      
+      // 3. Delete parent
+      const { error } = await supabase
+        .from('parents')
+        .delete()
+        .eq('id', deleteParentTarget.id);
+        
+      if (error) throw error;
+      
+      showFlash(`Parent "${deleteParentTarget.first_name} ${deleteParentTarget.last_name}" permanently deleted.`);
+      setDeleteParentTarget(null);
+      await loadData();
+    } catch (err: any) {
+      showFlash('Failed to delete parent: ' + err.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!deleteStudentTarget) return;
+    setDeleting(true);
+    try {
+      // 1. Delete discounts
+      await supabase.from('discounts').delete().eq('student_id', deleteStudentTarget.id);
+      
+      // 2. Delete student monthly fees
+      await supabase.from('student_monthly_fees').delete().eq('student_id', deleteStudentTarget.id);
+      
+      // 3. Delete student
+      const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', deleteStudentTarget.id);
+        
+      if (error) throw error;
+      
+      showFlash(`Student "${deleteStudentTarget.first_name} ${deleteStudentTarget.last_name}" permanently deleted.`);
+      setDeleteStudentTarget(null);
+      await loadData();
+    } catch (err: any) {
+      showFlash('Failed to delete student: ' + err.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filteredParents = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -154,14 +227,24 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
                         <td>{p.address || '—'}</td>
                         {isOwner && (
                           <td style={{ textAlign: 'right' }}>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => onAction && onAction(p.id, 'people-parents')}
-                              title="View Parent Profile"
-                            >
-                              <Search size={14} /> View Profile
-                            </Button>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => onAction && onAction(p.id, 'people-parents')}
+                                title="View Parent Profile"
+                              >
+                                <Search size={14} /> View Profile
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="danger"
+                                onClick={() => setDeleteParentTarget(p)}
+                                title="Permanently Delete Duplicate Parent"
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           </td>
                         )}
                       </tr>
@@ -207,14 +290,24 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
                           </td>
                           {isOwner && (
                             <td style={{ textAlign: 'right' }}>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => onAction && onAction(s.parent_id, 'people-parents')}
-                                title="View Parent Profile"
-                              >
-                                <Search size={14} /> View Profile
-                              </Button>
+                              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => onAction && onAction(s.parent_id, 'people-parents')}
+                                  title="View Parent Profile"
+                                >
+                                  <Search size={14} /> View Profile
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="danger"
+                                  onClick={() => setDeleteStudentTarget(s)}
+                                  title="Permanently Delete Duplicate Student"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
                             </td>
                           )}
                         </tr>
@@ -226,6 +319,40 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
             )
           )}
         </>
+      )}
+
+      {/* Parent Deletion confirmation backdrop */}
+      {deleteParentTarget && (
+        <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setDeleteParentTarget(null)}>
+          <div className="confirm-box">
+            <Trash2 size={40} color="var(--danger)" />
+            <h3>Delete Parent Permanently?</h3>
+            <p>
+              Are you sure this is a duplicate record? This will permanently delete <strong>{deleteParentTarget.first_name} {deleteParentTarget.last_name}</strong> and all their registered child profiles from the database. This action cannot be undone.
+            </p>
+            <div className="confirm-box-btns">
+              <Button variant="secondary" onClick={() => setDeleteParentTarget(null)}>Cancel</Button>
+              <Button variant="danger" onClick={handleDeleteParent} isLoading={deleting}>Delete</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Deletion confirmation backdrop */}
+      {deleteStudentTarget && (
+        <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setDeleteStudentTarget(null)}>
+          <div className="confirm-box">
+            <Trash2 size={40} color="var(--danger)" />
+            <h3>Delete Student Permanently?</h3>
+            <p>
+              Are you sure this is a duplicate record? This will permanently delete student <strong>{deleteStudentTarget.first_name} {deleteStudentTarget.last_name}</strong> from the database. This action cannot be undone.
+            </p>
+            <div className="confirm-box-btns">
+              <Button variant="secondary" onClick={() => setDeleteStudentTarget(null)}>Cancel</Button>
+              <Button variant="danger" onClick={handleDeleteStudent} isLoading={deleting}>Delete</Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
