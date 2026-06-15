@@ -63,17 +63,33 @@ export const ParentsManager = ({
   const [viewTarget, setViewTarget] = useState<Parent | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
 
-  // Handle initial parent view redirect (e.g. from Arrears page click)
+  // Handle initial parent view redirect (e.g. from Arrears or Archive click)
   useEffect(() => {
-    if (initialViewParentId && records.length > 0 && !viewTarget) {
-      const target = records.find(p => p.id === initialViewParentId);
-      if (target) {
-        setViewTarget(target);
-        if (onClearInitialParent) {
-          onClearInitialParent();
+    const checkInitialParent = async () => {
+      if (initialViewParentId && !viewTarget) {
+        let target = records.find(p => p.id === initialViewParentId);
+        
+        // If not found in active records (could be deactivated), fetch from DB directly
+        if (!target && records.length > 0) {
+          const { data, error } = await supabase
+            .from('parents')
+            .select('*')
+            .eq('id', initialViewParentId)
+            .maybeSingle();
+          if (data && !error) {
+            target = data;
+          }
+        }
+        
+        if (target) {
+          setViewTarget(target);
+          if (onClearInitialParent) {
+            onClearInitialParent();
+          }
         }
       }
-    }
+    };
+    checkInitialParent();
   }, [initialViewParentId, records, viewTarget, onClearInitialParent]);
 
   const set = (k: string, v: string) => {
@@ -376,7 +392,6 @@ export const ParentsManager = ({
           onBack={() => setViewTarget(null)}
           onAddChild={openAddChild}
           onEdit={openEdit}
-          onDelete={setDeleteTarget}
           isOwner={isOwner}
           onPaymentRecorded={load}
         />

@@ -498,7 +498,14 @@ export const Dashboard = () => {
           {tab === 'people-teachers' && <Suspense fallback={<ManagerFallback />}><TeachersManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'people-archive' && (
             <Suspense fallback={<ManagerFallback />}>
-              <ArchiveManager schoolId={profile.id} role={role || undefined} />
+              <ArchiveManager 
+                schoolId={profile.id} 
+                role={role || undefined} 
+                onAction={(pid, targetTab) => {
+                  setFocusedParentId(pid);
+                  changeTab(targetTab as any);
+                }}
+              />
             </Suspense>
           )}
           {tab === 'finances-income' && <Suspense fallback={<ManagerFallback />}><IncomeManager schoolId={profile.id} role={role || undefined} /></Suspense>}

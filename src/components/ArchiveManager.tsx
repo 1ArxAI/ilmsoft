@@ -3,15 +3,16 @@ import { supabase } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { useFlashMessage } from '../hooks/useFlashMessage';
-import { Users, GraduationCap, Search, RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
+import { Users, GraduationCap, Search, Loader2 } from 'lucide-react';
 import './managers.css';
 
 interface ArchiveManagerProps {
   schoolId: string;
   role?: Role;
+  onAction?: (parentId: string, targetTab: 'people-parents') => void;
 }
 
-export const ArchiveManager = ({ schoolId, role }: ArchiveManagerProps) => {
+export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps) => {
   const isOwner = !role || role === 'owner';
   const { flash, showFlash } = useFlashMessage(4000);
   const [subTab, setSubTab] = useState<'parents' | 'students'>('parents');
@@ -19,11 +20,6 @@ export const ArchiveManager = ({ schoolId, role }: ArchiveManagerProps) => {
   const [parents, setParents] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState('');
-  
-  // Activation state
-  const [parentTarget, setParentTarget] = useState<any | null>(null);
-  const [studentTarget, setStudentTarget] = useState<any | null>(null);
-  const [activating, setActivating] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -61,67 +57,6 @@ export const ArchiveManager = ({ schoolId, role }: ArchiveManagerProps) => {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const handleActivateParent = async () => {
-    if (!parentTarget) return;
-    setActivating(true);
-    try {
-      // 1. Activate parent
-      const { error: parentErr } = await supabase
-        .from('parents')
-        .update({ is_active: true })
-        .eq('id', parentTarget.id);
-      if (parentErr) throw parentErr;
-
-      // 2. Also activate all their students
-      const { error: studentErr } = await supabase
-        .from('students')
-        .update({ active: true })
-        .eq('parent_id', parentTarget.id);
-      if (studentErr) throw studentErr;
-
-      showFlash(`Parent "${parentTarget.first_name} ${parentTarget.last_name}" and their children activated successfully.`);
-      setParentTarget(null);
-      await loadData();
-    } catch (err: any) {
-      showFlash('Failed to activate parent: ' + err.message);
-    } finally {
-      setActivating(false);
-    }
-  };
-
-  const handleActivateStudent = async () => {
-    if (!studentTarget) return;
-    setActivating(true);
-    try {
-      // If parent is deactivated, warn/check
-      const parentIsActive = studentTarget.parents?.is_active !== false;
-      
-      // If parent is inactive, activate parent first
-      if (!parentIsActive) {
-        const { error: parentErr } = await supabase
-          .from('parents')
-          .update({ is_active: true })
-          .eq('id', studentTarget.parent_id);
-        if (parentErr) throw parentErr;
-      }
-
-      // Activate student
-      const { error: studentErr } = await supabase
-        .from('students')
-        .update({ active: true })
-        .eq('id', studentTarget.id);
-      if (studentErr) throw studentErr;
-
-      showFlash(`Student "${studentTarget.first_name} ${studentTarget.last_name}" activated successfully.`);
-      setStudentTarget(null);
-      await loadData();
-    } catch (err: any) {
-      showFlash('Failed to activate student: ' + err.message);
-    } finally {
-      setActivating(false);
-    }
-  };
 
   const filteredParents = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -222,10 +157,10 @@ export const ArchiveManager = ({ schoolId, role }: ArchiveManagerProps) => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => setParentTarget(p)}
-                              title="Restore Parent and Children"
+                              onClick={() => onAction && onAction(p.id, 'people-parents')}
+                              title="View Parent Profile"
                             >
-                              <RotateCcw size={14} /> Restore
+                              <Search size={14} /> View Profile
                             </Button>
                           </td>
                         )}
@@ -275,10 +210,10 @@ export const ArchiveManager = ({ schoolId, role }: ArchiveManagerProps) => {
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                onClick={() => setStudentTarget(s)}
-                                title="Restore Student"
+                                onClick={() => onAction && onAction(s.parent_id, 'people-parents')}
+                                title="View Parent Profile"
                               >
-                                <RotateCcw size={14} /> Restore
+                                <Search size={14} /> View Profile
                               </Button>
                             </td>
                           )}
@@ -291,45 +226,6 @@ export const ArchiveManager = ({ schoolId, role }: ArchiveManagerProps) => {
             )
           )}
         </>
-      )}
-
-      {/* Parent Restoration confirmation backdrop */}
-      {parentTarget && (
-        <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setParentTarget(null)}>
-          <div className="confirm-box">
-            <AlertTriangle size={40} color="var(--primary)" />
-            <h3>Restore Parent Account?</h3>
-            <p>
-              This will restore <strong>{parentTarget.first_name} {parentTarget.last_name}</strong> and reactivate all children registered under their profile.
-            </p>
-            <div className="confirm-box-btns">
-              <Button variant="secondary" onClick={() => setParentTarget(null)}>Cancel</Button>
-              <Button onClick={handleActivateParent} isLoading={activating}>Restore</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Student Restoration confirmation backdrop */}
-      {studentTarget && (
-        <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setStudentTarget(null)}>
-          <div className="confirm-box">
-            <AlertTriangle size={40} color="var(--primary)" />
-            <h3>Restore Student Profile?</h3>
-            <p>
-              This will reactivate student <strong>{studentTarget.first_name} {studentTarget.last_name}</strong>.
-              {studentTarget.parents?.is_active === false && (
-                <span style={{ display: 'block', marginTop: '0.5rem', fontSize: 'var(--font-xs)', color: 'var(--danger)' }}>
-                  <strong>Important:</strong> The parent profile for this student is currently deactivated. Restoring this student will automatically reactivate the parent profile as well.
-                </span>
-              )}
-            </p>
-            <div className="confirm-box-btns">
-              <Button variant="secondary" onClick={() => setStudentTarget(null)}>Cancel</Button>
-              <Button onClick={handleActivateStudent} isLoading={activating}>Restore</Button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

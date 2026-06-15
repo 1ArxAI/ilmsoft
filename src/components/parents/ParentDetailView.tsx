@@ -14,7 +14,6 @@ interface ParentDetailViewProps {
   onBack: () => void;
   onAddChild: (p: Parent) => void;
   onEdit: (p: Parent) => void;
-  onDelete: (p: Parent) => void;
   isOwner: boolean;
   onPrintReceipt?: (paymentId: string) => void;
   onPaymentRecorded?: () => void;
@@ -26,7 +25,6 @@ export const ParentDetailView = ({
   onBack,
   onAddChild,
   onEdit,
-  onDelete,
   isOwner,
   onPrintReceipt,
   onPaymentRecorded
@@ -51,7 +49,7 @@ export const ParentDetailView = ({
         supabase.from('parent_balances').select('balance').eq('parent_id', parent.id).maybeSingle(),
         supabase.from('payments').select('id, received_amount, payment_method, received_at, notes').eq('parent_id', parent.id).order('received_at', { ascending: false }).limit(5),
         supabase.from('ledger').select('id, entry_type, amount, reference_type, description, month, created_at').eq('parent_id', parent.id).order('created_at', { ascending: false }).limit(10),
-        supabase.from('students').select('*').eq('parent_id', parent.id).eq('active', true)
+        supabase.from('students').select('*').eq('parent_id', parent.id)
       ]);
 
       setBalance(balRes.data?.balance || 0);
@@ -68,6 +66,61 @@ export const ParentDetailView = ({
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const [updatingParentStatus, setUpdatingParentStatus] = useState(false);
+  const [updatingChildId, setUpdatingChildId] = useState<string | null>(null);
+
+  const handleToggleParentActivation = async () => {
+    setUpdatingParentStatus(true);
+    try {
+      const newStatus = !parent.is_active;
+      const { error } = await supabase
+        .from('parents')
+        .update({ is_active: newStatus })
+        .eq('id', parent.id);
+      
+      if (error) throw error;
+      
+      // If reactivating parent, also activate all their students
+      if (newStatus) {
+        await supabase.from('students').update({ active: true }).eq('parent_id', parent.id);
+      } else {
+        // If deactivating, deactivate all their students
+        await supabase.from('students').update({ active: false }).eq('parent_id', parent.id);
+      }
+
+      showFlash(`Parent profile ${newStatus ? 'activated' : 'deactivated'} successfully.`);
+      if (onPaymentRecorded) {
+        onPaymentRecorded(); // Refresh manager parent list
+      }
+      onBack(); // Return to families list
+    } catch (err: any) {
+      showFlash('Error: ' + err.message);
+    } finally {
+      setUpdatingParentStatus(false);
+    }
+  };
+
+  const handleToggleChildActive = async (childId: string, currentActive: boolean) => {
+    setUpdatingChildId(childId);
+    try {
+      const { error } = await supabase
+        .from('students')
+        .update({ active: !currentActive })
+        .eq('id', childId);
+      if (error) throw error;
+      
+      showFlash(`Student active status updated successfully.`);
+      await loadData();
+      if (onPaymentRecorded) {
+        onPaymentRecorded();
+      }
+    } catch (err: any) {
+      showFlash('Error updating student status: ' + err.message);
+    } finally {
+      setUpdatingChildId(null);
+    }
+  };
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,7 +277,7 @@ export const ParentDetailView = ({
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Student Name</th><th>Gender</th><th>Class</th><th>Gross Fee</th><th>Discount</th><th>Net Fee</th>
+                      <th>Student Name</th><th>Gender</th><th>Class</th><th>Status</th><th>Gross Fee</th><th>Discount</th><th>Net Fee</th>{isOwner && <th style={{ textAlign: 'right' }}>Actions</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -237,11 +290,29 @@ export const ParentDetailView = ({
                           <td style={{ fontWeight: 600 }}>{child.first_name} {child.last_name}</td>
                           <td>{child.gender || '—'}</td>
                           <td>{getClassName(child.current_class_id)}</td>
+                          <td>
+                            <span className={`status-pill ${child.active ? 'approved' : 'rejected'}`} style={{ fontSize: '10px' }}>
+                              {child.active ? 'Active' : 'Deactivated'}
+                            </span>
+                          </td>
                           <td>Rs. {gross.toLocaleString()}</td>
                           <td style={{ color: disc > 0 ? 'var(--success)' : 'inherit' }}>
                             {disc > 0 ? `-Rs. ${disc.toLocaleString()}` : '—'}
                           </td>
                           <td style={{ fontWeight: 700 }}>Rs. {net.toLocaleString()}</td>
+                          {isOwner && (
+                            <td style={{ textAlign: 'right' }}>
+                              <Button 
+                                size="sm" 
+                                variant={child.active ? 'danger' : 'success'}
+                                onClick={() => handleToggleChildActive(child.id, child.active)}
+                                isLoading={updatingChildId === child.id}
+                                style={{ minHeight: '30px', padding: '0 8px', fontSize: '11px' }}
+                              >
+                                {child.active ? 'Deactivate' : 'Activate'}
+                              </Button>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -374,14 +445,26 @@ export const ParentDetailView = ({
             </form>
           </div>
 
-          {/* Account Settings / Deactivate Panel */}
-          {isOwner && (
+          {/* Account Settings / Deactivate / Activate Panel */}
+          {isOwner && parent.is_active === false && (
+            <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--success-light)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, color: 'var(--success)', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Restore Account</h3>
+              <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                Activating this parent will restore billing and reactivate all children registered under their profile.
+              </p>
+              <Button variant="success" fullWidth onClick={handleToggleParentActivation} isLoading={updatingParentStatus}>
+                <CheckCircle size={16} /> Activate Parent
+              </Button>
+            </div>
+          )}
+
+          {isOwner && parent.is_active !== false && (
             <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--danger-light)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, color: 'var(--danger)', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Danger Zone</h3>
               <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                 Deactivating this parent will also deactivate all their child profiles and restrict billing.
               </p>
-              <Button variant="danger" fullWidth onClick={() => onDelete(parent)}>
+              <Button variant="danger" fullWidth onClick={handleToggleParentActivation} isLoading={updatingParentStatus}>
                 <Trash2 size={16} /> Deactivate Parent
               </Button>
             </div>
