@@ -127,6 +127,20 @@ export const ParentDetailView = ({
 
   return (
     <div className="animate-fade-up" style={{ paddingBottom: '2rem' }}>
+      <style>{`
+        .parent-detail-grid {
+          display: grid;
+          grid-template-columns: 1fr 320px;
+          gap: 1.5rem;
+          align-items: start;
+        }
+        @media (max-width: 900px) {
+          .parent-detail-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
       {/* Header toolbar */}
       <div className="manager-toolbar" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
         <Button variant="ghost" onClick={onBack}>
@@ -148,156 +162,168 @@ export const ParentDetailView = ({
       )}
 
       {/* Main Profile Info Grid */}
-      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="parent-detail-grid">
         
         {/* Left Column: Report content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Parent Summary Card */}
-          <div className="record-card" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
             <div className="record-avatar" style={{ width: '64px', height: '64px', fontSize: '1.5rem' }}>
               {parent.first_name[0]}{parent.last_name[0]}
             </div>
             <div style={{ flex: 1 }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem' }}>{parent.first_name} {parent.last_name}</h2>
-              <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>{parent.first_name} {parent.last_name}</h2>
+              <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', color: 'var(--text-secondary)', fontSize: 'var(--font-sm)' }}>
                 <span><strong>CNIC:</strong> {parent.cnic}</span>
                 <span><strong>Contact:</strong> {parent.contact}</span>
               </div>
-              {parent.address && <div style={{ marginTop: '0.25rem', color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}><strong>Address:</strong> {parent.address}</div>}
+              {parent.address && <div style={{ marginTop: '0.25rem', color: 'var(--text-secondary)', fontSize: 'var(--font-sm)' }}><strong>Address:</strong> {parent.address}</div>}
             </div>
           </div>
 
           {/* Stats Boxes */}
-          <div className="overview-stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: 0 }}>
-            <div className={`ov-stat-card ${balance < 0 ? 'rose' : 'green'}`}>
-              <div className="ov-stat-icon"><DollarSign size={20} /></div>
-              <div className="ov-stat-label">Current Balance</div>
-              <div className="ov-stat-value" style={{ color: balance < 0 ? 'var(--danger)' : 'var(--success)' }}>
-                {balance < 0 ? `Rs. ${Math.abs(balance).toLocaleString()}` : `Rs. ${balance.toLocaleString()} (Adv)`}
+          <div className="manager-stats-grid" style={{ marginBottom: 0 }}>
+            <div className={`manager-stat-card ${balance < 0 ? 'rose' : 'green'}`}>
+              <div className="manager-stat-icon"><DollarSign size={20} /></div>
+              <div className="manager-stat-info">
+                <div className="manager-stat-label">Current Balance</div>
+                <div className="manager-stat-value" style={{ color: balance < 0 ? 'var(--danger)' : 'var(--success)' }}>
+                  {balance < 0 ? `Rs. ${Math.abs(balance).toLocaleString()}` : `Rs. ${balance.toLocaleString()} (Adv)`}
+                </div>
+                <div className="manager-stat-sub">{balance < 0 ? 'Outstanding dues' : 'Advance balance'}</div>
               </div>
-              <div className="ov-stat-sub">{balance < 0 ? 'Outstanding dues' : 'Advance balance'}</div>
             </div>
-            <div className="ov-stat-card blue">
-              <div className="ov-stat-icon"><GraduationCap size={20} /></div>
-              <div className="ov-stat-label">Monthly Fee</div>
-              <div className="ov-stat-value">Rs. {totalMonthlyFee.toLocaleString()}</div>
-              <div className="ov-stat-sub">For {children.length} active children</div>
-            </div>
-            <div className="ov-stat-card purple">
-              <div className="ov-stat-icon"><Coins size={20} /></div>
-              <div className="ov-stat-label">Scholarship / Discount</div>
-              <div className="ov-stat-value" style={{ color: totalDiscount > 0 ? 'var(--success)' : 'inherit' }}>
-                Rs. {totalDiscount.toLocaleString()}
+            <div className="manager-stat-card blue">
+              <div className="manager-stat-icon"><GraduationCap size={20} /></div>
+              <div className="manager-stat-info">
+                <div className="manager-stat-label">Monthly Fee</div>
+                <div className="manager-stat-value">Rs. {totalMonthlyFee.toLocaleString()}</div>
+                <div className="manager-stat-sub">For {children.length} active children</div>
               </div>
-              <div className="ov-stat-sub">Monthly reduction</div>
+            </div>
+            <div className="manager-stat-card purple">
+              <div className="manager-stat-icon"><Coins size={20} /></div>
+              <div className="manager-stat-info">
+                <div className="manager-stat-label">Scholarship / Discount</div>
+                <div className="manager-stat-value" style={{ color: totalDiscount > 0 ? 'var(--success)' : 'inherit' }}>
+                  Rs. {totalDiscount.toLocaleString()}
+                </div>
+                <div className="manager-stat-sub">Monthly reduction</div>
+              </div>
             </div>
           </div>
 
           {/* Children section */}
-          <div className="record-card">
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Active Enrolled Children</h3>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Active Enrolled Children</h3>
             {children.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>No children enrolled yet.</div>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Student Name</th><th>Gender</th><th>Class</th><th>Gross Fee</th><th>Discount</th><th>Net Fee</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {children.map(child => {
-                    const gross = child.monthly_fee || 0;
-                    const net = child.current_monthly_fee || 0;
-                    const disc = gross - net;
-                    return (
-                      <tr key={child.id}>
-                        <td style={{ fontWeight: 600 }}>{child.first_name} {child.last_name}</td>
-                        <td>{child.gender || '—'}</td>
-                        <td>{getClassName(child.current_class_id)}</td>
-                        <td>Rs. {gross.toLocaleString()}</td>
-                        <td style={{ color: disc > 0 ? 'var(--success)' : 'inherit' }}>
-                          {disc > 0 ? `-Rs. ${disc.toLocaleString()}` : '—'}
-                        </td>
-                        <td style={{ fontWeight: 700 }}>Rs. {net.toLocaleString()}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Student Name</th><th>Gender</th><th>Class</th><th>Gross Fee</th><th>Discount</th><th>Net Fee</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {children.map(child => {
+                      const gross = child.monthly_fee || 0;
+                      const net = child.current_monthly_fee || 0;
+                      const disc = gross - net;
+                      return (
+                        <tr key={child.id}>
+                          <td style={{ fontWeight: 600 }}>{child.first_name} {child.last_name}</td>
+                          <td>{child.gender || '—'}</td>
+                          <td>{getClassName(child.current_class_id)}</td>
+                          <td>Rs. {gross.toLocaleString()}</td>
+                          <td style={{ color: disc > 0 ? 'var(--success)' : 'inherit' }}>
+                            {disc > 0 ? `-Rs. ${disc.toLocaleString()}` : '—'}
+                          </td>
+                          <td style={{ fontWeight: 700 }}>Rs. {net.toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
           {/* Payment History section */}
-          <div className="record-card">
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Recent Payment History</h3>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Recent Payment History</h3>
             {payments.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>No payment records found.</div>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Date</th><th>Amount</th><th>Method</th><th>Notes/Reference</th><th>Receipt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map(pay => (
-                    <tr key={pay.id}>
-                      <td>{new Date(pay.received_at).toLocaleDateString('en-PK')}</td>
-                      <td style={{ fontWeight: 600, color: 'var(--success)' }}>Rs. {pay.received_amount.toLocaleString()}</td>
-                      <td style={{ textTransform: 'capitalize' }}>{pay.payment_method}</td>
-                      <td>{pay.notes || '—'}</td>
-                      <td>
-                        {onPrintReceipt && (
-                          <Button size="sm" variant="ghost" onClick={() => onPrintReceipt(pay.id)}>
-                            <Printer size={14} /> Receipt
-                          </Button>
-                        )}
-                      </td>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Amount</th><th>Method</th><th>Notes/Reference</th><th>Receipt</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {payments.map(pay => (
+                      <tr key={pay.id}>
+                        <td>{new Date(pay.received_at).toLocaleDateString('en-PK')}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--success)' }}>Rs. {pay.received_amount.toLocaleString()}</td>
+                        <td style={{ textTransform: 'capitalize' }}>{pay.payment_method}</td>
+                        <td>{pay.notes || '—'}</td>
+                        <td>
+                          {onPrintReceipt && (
+                            <Button size="sm" variant="ghost" onClick={() => onPrintReceipt(pay.id)}>
+                              <Printer size={14} /> Receipt
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
           {/* Ledger Timeline section */}
-          <div className="record-card">
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Ledger Timeline (Last 10 Entries)</h3>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Ledger Timeline (Last 10 Entries)</h3>
             {ledger.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>No transactions recorded yet.</div>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Date</th><th>Description</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ledger.map(entry => (
-                    <tr key={entry.id}>
-                      <td>{new Date(entry.created_at).toLocaleDateString('en-PK')}</td>
-                      <td>
-                        <span style={{ fontWeight: 600 }}>{entry.description || 'Adjustment'}</span>
-                        {entry.month && <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '8px' }}>({entry.month})</span>}
-                      </td>
-                      <td>
-                        <span className={`status-pill ${entry.entry_type === 'debit' ? 'rejected' : 'approved'}`} style={{ fontSize: '10px' }}>
-                          {entry.entry_type === 'debit' ? 'Debit' : 'Credit'}
-                        </span>
-                      </td>
-                      <td style={{ 
-                        textAlign: 'right', 
-                        fontWeight: 600, 
-                        color: entry.entry_type === 'debit' ? 'var(--danger)' : 'var(--success)' 
-                      }}>
-                        {entry.entry_type === 'debit' ? `+Rs. ${entry.amount.toLocaleString()}` : `-Rs. ${entry.amount.toLocaleString()}`}
-                      </td>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Description</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {ledger.map(entry => (
+                      <tr key={entry.id}>
+                        <td>{new Date(entry.created_at).toLocaleDateString('en-PK')}</td>
+                        <td>
+                          <span style={{ fontWeight: 600 }}>{entry.description || 'Adjustment'}</span>
+                          {entry.month && <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '8px' }}>({entry.month})</span>}
+                        </td>
+                        <td>
+                          <span className={`status-pill ${entry.entry_type === 'debit' ? 'rejected' : 'approved'}`} style={{ fontSize: '10px' }}>
+                            {entry.entry_type === 'debit' ? 'Debit' : 'Credit'}
+                          </span>
+                        </td>
+                        <td style={{ 
+                          textAlign: 'right', 
+                          fontWeight: 600, 
+                          color: entry.entry_type === 'debit' ? 'var(--danger)' : 'var(--success)' 
+                        }}>
+                          {entry.entry_type === 'debit' ? `+Rs. ${entry.amount.toLocaleString()}` : `-Rs. ${entry.amount.toLocaleString()}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
@@ -306,11 +332,11 @@ export const ParentDetailView = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Quick Record Payment Form */}
-          <div className="record-card">
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Record Payment</h3>
-            <form onSubmit={handleRecordPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Record Payment</h3>
+            <form onSubmit={handleRecordPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="form-group">
-                <label className="form-label" style={{ fontSize: '0.8rem' }}>Amount Received (PKR)</label>
+                <label className="form-label">Amount Received (PKR)</label>
                 <input 
                   type="number" 
                   required 
@@ -322,7 +348,7 @@ export const ParentDetailView = ({
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ fontSize: '0.8rem' }}>Payment Method</label>
+                <label className="form-label">Payment Method</label>
                 <select className="form-select" value={method} onChange={e => setMethod(e.target.value)}>
                   <option value="cash">Cash</option>
                   <option value="bank">Bank Transfer</option>
@@ -332,7 +358,7 @@ export const ParentDetailView = ({
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ fontSize: '0.8rem' }}>Notes / Reference</label>
+                <label className="form-label">Notes / Reference</label>
                 <textarea 
                   className="form-textarea" 
                   value={notes} 
@@ -350,13 +376,13 @@ export const ParentDetailView = ({
 
           {/* Account Settings / Deactivate Panel */}
           {isOwner && (
-            <div className="record-card" style={{ border: '1px solid var(--danger-light)' }}>
-              <h3 style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--danger)' }}>Danger Zone</h3>
-              <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
+            <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--danger-light)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--font-md)', fontWeight: 700, color: 'var(--danger)', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Danger Zone</h3>
+              <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                 Deactivating this parent will also deactivate all their child profiles and restrict billing.
               </p>
               <Button variant="danger" fullWidth onClick={() => onDelete(parent)}>
-                <Trash2 size={16} style={{ marginRight: '8px' }} /> Deactivate Parent
+                <Trash2 size={16} /> Deactivate Parent
               </Button>
             </div>
           )}

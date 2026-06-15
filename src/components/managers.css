@@ -489,6 +489,15 @@
   border-color: var(--danger);
 }
 
+.action-btn.view {
+  color: var(--info);
+}
+
+.action-btn.view:hover {
+  background: var(--info-light);
+  border-color: var(--info);
+}
+
 .action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
