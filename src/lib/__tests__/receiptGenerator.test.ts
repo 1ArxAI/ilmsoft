@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateReceiptData } from '../receiptGenerator';
+import { generateReceiptData, formatCurrency, formatMonth } from '../receiptGenerator';
 import { supabase } from '../supabase';
 
 // Mock supabase client
@@ -80,5 +80,15 @@ describe('generateReceiptData', () => {
     
     const receipt2 = await generateReceiptData('pay1', '');
     expect(receipt2).toBeNull();
+  });
+});
+
+describe('format helpers', () => {
+  it('formats a number as Pakistani Rupees', () => {
+    expect(formatCurrency(100)).toBe('Rs 100');
+  });
+
+  it('formats a YYYY-MM string as a short month and year', () => {
+    expect(formatMonth('2026-04')).toBe('Apr 2026');
   });
 });
