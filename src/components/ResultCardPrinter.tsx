@@ -28,10 +28,13 @@ export const ResultCardPrinter: React.FC<ResultCardPrinterProps> = ({
   const loadAllData = useCallback(async () => {
     setLoading(true);
     try {
-      const [schoolRes, termRes, classRes] = await Promise.all([
+      const [schoolRes, termRes, classRes, configRes, studentsRes, resultsRes] = await Promise.all([
         supabase.from('schools').select('school_name, logo_url, primary_color, secondary_color, tertiary_color').eq('id', schoolId).single(),
-        supabase.from('exam_terms').select('id, name, academic_year, school_id, is_active').eq('id', termId).single(),
-        supabase.from('classes').select('name, subjects').eq('id', classId).single()
+        supabase.from('exam_terms').select('id, name, academic_year').eq('id', termId).single(),
+        supabase.from('classes').select('name, subjects').eq('id', classId).single(),
+        supabase.from('exam_term_configs').select('subject_totals').eq('exam_term_id', termId).eq('class_id', classId).maybeSingle(),
+        supabase.from('students').select('id, first_name, last_name, registration_number, gender').in('id', studentIds),
+        supabase.from('exam_results').select('student_id, subject_marks').eq('exam_term_id', termId).in('student_id', studentIds),
       ]);
 
       if (schoolRes.data) {
@@ -48,19 +51,7 @@ export const ResultCardPrinter: React.FC<ResultCardPrinterProps> = ({
 
       const subjects = classRes.data?.subjects || [];
 
-      const { data: configData } = await supabase
-        .from('exam_term_configs')
-        .select('subject_totals')
-        .eq('exam_term_id', termId)
-        .eq('class_id', classId)
-        .single();
-      
-      const totalMarksConfig = configData?.subject_totals || {};
-
-      const [studentsRes, resultsRes] = await Promise.all([
-        supabase.from('students').select('id, first_name, last_name, registration_number, gender, school_id, current_class_id, active').in('id', studentIds),
-        supabase.from('exam_results').select('id, student_id, exam_term_id, class_id, subject_marks, school_id').eq('exam_term_id', termId).in('student_id', studentIds)
-      ]);
+      const totalMarksConfig = configRes.data?.subject_totals || {};
 
       const students = studentsRes.data || [];
       const results = resultsRes.data || [];

@@ -10,21 +10,18 @@ export const useSuppliers = (schoolId: string) => {
   const loadSuppliers = useCallback(async () => {
     setLoading(true);
     
-    // Fetch suppliers
-    const { data: suppliersData, error: suppliersError } = await supabase
-      .from('suppliers')
-      .select('id, school_id, supplier_name, business_name, contact_number, address, opening_balance, current_balance, notes, created_at')
-      .eq('school_id', schoolId)
-      .order('supplier_name');
-    
+    const [{ data: suppliersData, error: suppliersError }, { data: txData, error: txError }] = await Promise.all([
+      supabase
+        .from('suppliers')
+        .select('id, school_id, supplier_name, business_name, contact_number, address, opening_balance, current_balance, notes, created_at')
+        .eq('school_id', schoolId)
+        .order('supplier_name'),
+      supabase
+        .from('supplier_transactions')
+        .select('supplier_id, type, amount')
+        .eq('school_id', schoolId),
+    ]);
     if (suppliersError) console.error('Error loading suppliers:', suppliersError);
-
-    // Fetch all transaction totals for this school
-    const { data: txData, error: txError } = await supabase
-      .from('supplier_transactions')
-      .select('supplier_id, type, amount')
-      .eq('school_id', schoolId);
-
     if (txError) console.error('Error loading transaction totals:', txError);
 
     // Compute balances: Opening + Sum(Bills) - Sum(Payments)

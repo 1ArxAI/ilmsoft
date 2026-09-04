@@ -167,70 +167,29 @@ export default function ExamResultsManager({ schoolId }: { schoolId: string }) {
 
     setFetchingData(true);
     try {
-      // a. Fetch subjects for the class
-      const { data: classData, error: classErr } = await supabase
-        .from('classes')
-        .select('subjects')
-        .eq('id', selectedClassId)
-        .single();
+      const [classRes, studentRes, configRes, resultsRes] = await Promise.all([
+        supabase.from('classes').select('subjects').eq('id', selectedClassId).single(),
+        supabase
+          .from('students')
+          .select('id, first_name, last_name, registration_number, parent_id, parents:parent_id(first_name, last_name)')
+          .eq('school_id', schoolId)
+          .eq('current_class_id', selectedClassId)
+          .eq('active', true)
+          .order('first_name'),
+        supabase.from('exam_term_configs').select('subject_totals').eq('exam_term_id', selectedTermId).eq('class_id', selectedClassId).maybeSingle(),
+        supabase.from('exam_results').select('student_id, subject_marks').eq('exam_term_id', selectedTermId).eq('class_id', selectedClassId),
+      ]);
+      if (classRes.error) throw classRes.error;
+      if (studentRes.error) throw studentRes.error;
+      setSubjects(classRes.data?.subjects || []);
 
-      if (classErr) throw classErr;
-      const classSubjects = classData?.subjects || [];
-      setSubjects(classSubjects);
-
-      // b. Fetch active students in the class
-      const { data: studentData, error: studErr } = await supabase
-        .from('students')
-        .select('id, first_name, last_name, registration_number, parent_id')
-        .eq('school_id', schoolId)
-        .eq('current_class_id', selectedClassId)
-        .eq('active', true)
-        .order('first_name');
-
-      if (studErr) throw studErr;
-
-      // Fetch parents for these students
-      const parentIds = Array.from(new Set((studentData || []).map(s => s.parent_id).filter(Boolean)));
-      const parentsMap = new Map();
-      if (parentIds.length > 0) {
-        const { data: parentData } = await supabase
-          .from('parents')
-          .select('id, first_name, last_name')
-          .in('id', parentIds);
-        if (parentData) {
-          parentData.forEach(p => {
-            parentsMap.set(p.id, `${p.first_name} ${p.last_name}`.trim());
-          });
-        }
-      }
-
-      const studentsWithParents = (studentData || []).map(s => ({
-        ...s,
-        father_name: s.parent_id ? parentsMap.get(s.parent_id) : ''
+      const studentsWithParents = (studentRes.data || []).map((s: any) => ({
+        id: s.id, first_name: s.first_name, last_name: s.last_name, registration_number: s.registration_number, parent_id: s.parent_id,
+        father_name: s.parents ? `${s.parents.first_name} ${s.parents.last_name}`.trim() : ''
       }));
-
       setStudents(studentsWithParents);
-
-      // c. Fetch existing total marks configuration
-      const { data: configData } = await supabase
-        .from('exam_term_configs')
-        .select('subject_totals')
-        .eq('exam_term_id', selectedTermId)
-        .eq('class_id', selectedClassId)
-        .single();
-
-      if (configData) {
-        setTotalMarks(configData.subject_totals || {});
-      } else {
-        setTotalMarks({});
-      }
-
-      // d. Fetch existing results for all students in this class/term
-      const { data: resultsData } = await supabase
-        .from('exam_results')
-        .select('student_id, subject_marks')
-        .eq('exam_term_id', selectedTermId)
-        .eq('class_id', selectedClassId);
+      setTotalMarks(configRes.data?.subject_totals || {});
+      const resultsData = resultsRes.data;
 
       const resultsMap: Record<string, Record<string, number>> = {};
       (resultsData || []).forEach(r => {

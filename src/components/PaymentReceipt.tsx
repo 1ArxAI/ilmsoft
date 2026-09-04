@@ -33,42 +33,22 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ schoolId, paymen
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch School Info
-      const { data: schoolData } = await supabase
-        .from('schools')
-        .select('school_name, logo_url')
-        .eq('id', schoolId)
-        .single();
-      
-      if (schoolData) {
-        setSchoolName(schoolData.school_name);
-        setLogo(schoolData.logo_url);
-      }
-
-      // 2. Fetch Payment Info
-      const { data: paymentData, error: payError } = await supabase
-        .from('payments')
-        .select(`
-          *,
-          parents:parent_id(first_name, last_name, contact)
-        `)
-        .eq('id', paymentId)
-        .single();
-
-      if (payError) throw payError;
-
-      // 3. Fetch Students for this parent
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('first_name, last_name')
-        .eq('parent_id', paymentData.parent_id);
-
-      // 4. Fetch Current Balance
-      const { data: balData } = await supabase
-        .from('parent_balances')
-        .select('balance')
-        .eq('parent_id', paymentData.parent_id)
-        .single();
+      const [schoolRes, payRes] = await Promise.all([
+        supabase.from('schools').select('school_name, logo_url').eq('id', schoolId).single(),
+        supabase
+          .from('payments')
+          .select(`
+            id, parent_id, received_amount, payment_method, notes, received_at,
+            parents:parent_id(first_name, last_name, contact, students(first_name, last_name), parent_balances(balance))
+          `)
+          .eq('id', paymentId)
+          .single(),
+      ]);
+      if (schoolRes.data) { setSchoolName(schoolRes.data.school_name); setLogo(schoolRes.data.logo_url); }
+      if (payRes.error) throw payRes.error;
+      const paymentData = payRes.data as any;
+      const studentData = (paymentData.parents?.students || []) as { first_name: string; last_name: string }[];
+      const balData = (paymentData.parents?.parent_balances?.[0] ?? paymentData.parents?.parent_balances) as { balance: number } | undefined;
 
       setReceipt({
         id: paymentData.id,

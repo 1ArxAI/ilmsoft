@@ -98,40 +98,25 @@ export const ResultCardManager: React.FC<{ schoolId: string }> = ({ schoolId }) 
       }
       
       try {
-        // Fetch all students in the class
-        const { data: studentData, error: studErr } = await supabase
-          .from('students')
-          .select('id, first_name, last_name, registration_number, parent_id')
-          .eq('current_class_id', selectedClassId)
-          .eq('school_id', schoolId)
-          .eq('active', true)
-          .order('first_name');
-
+        const [{ data: studentRaw, error: studErr }, { data: resultData, error: resErr }] = await Promise.all([
+          supabase
+            .from('students')
+            .select('id, first_name, last_name, registration_number, parent_id, parents:parent_id(first_name, last_name)')
+            .eq('current_class_id', selectedClassId)
+            .eq('school_id', schoolId)
+            .eq('active', true)
+            .order('first_name'),
+          supabase
+            .from('exam_results')
+            .select('student_id')
+            .eq('exam_term_id', selectedTermId)
+            .eq('class_id', selectedClassId),
+        ]);
         if (studErr) throw studErr;
-
-        // Fetch parents
-        const parentIds = Array.from(new Set((studentData || []).map(s => s.parent_id).filter(Boolean)));
-        const parentsMap = new Map();
-        if (parentIds.length > 0) {
-          const { data: parentData } = await supabase
-            .from('parents')
-            .select('id, first_name, last_name')
-            .in('id', parentIds);
-          if (parentData) {
-            parentData.forEach(p => {
-              parentsMap.set(p.id, `${p.first_name} ${p.last_name}`.trim());
-            });
-          }
-        }
-
-        // Fetch which students have results for THIS term
-        const { data: resultData, error: resErr } = await supabase
-          .from('exam_results')
-          .select('student_id')
-          .eq('exam_term_id', selectedTermId)
-          .in('student_id', (studentData || []).map(s => s.id));
-
         if (resErr) throw resErr;
+        const studentData = (studentRaw || []).map((s: any) => ({ id: s.id, first_name: s.first_name, last_name: s.last_name, registration_number: s.registration_number, parent_id: s.parent_id, parents: s.parents }));
+        const parentsMap = new Map<string, string>();
+        studentData.forEach((s: any) => { if (s.parents) parentsMap.set(s.parent_id, `${s.parents.first_name} ${s.parents.last_name}`.trim()); });
 
         const hasResult = new Set(resultData?.map(r => r.student_id) || []);
         

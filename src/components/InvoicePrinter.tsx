@@ -46,29 +46,7 @@ export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month,
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch School Info
-      const { data: schoolData } = await supabase
-        .from('schools')
-        .select('school_name, logo_url')
-        .eq('id', schoolId)
-        .single();
-      
-      
-      if (schoolData) {
-        setSchoolName(schoolData.school_name);
-        setLogo(schoolData.logo_url);
-      }
-
-      // 1.5 Fetch Classes for dropdown
-      const { data: classData } = await supabase
-        .from('classes')
-        .select('id, name')
-        .eq('school_id', schoolId)
-        .order('name');
-      
-      if (classData) setClassList(classData);
-
-      // 2. Fetch parent(s) with current balance
+      // All five reads are independent: run them together.
       let parentQuery = supabase
         .from('parents')
         .select(`
@@ -76,15 +54,8 @@ export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month,
           parent_balances(balance)
         `)
         .eq('school_id', schoolId);
-      
-      if (parentId) {
-        parentQuery = parentQuery.eq('id', parentId);
-      }
+      if (parentId) parentQuery = parentQuery.eq('id', parentId);
 
-      const { data: parentData, error: parentError } = await parentQuery;
-      if (parentError) throw parentError;
-
-      // 3. Fetch monthly student fees for this month
       let feeQuery = supabase
         .from('student_monthly_fees')
         .select(`
@@ -99,19 +70,30 @@ export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month,
         `)
         .eq('school_id', schoolId)
         .eq('month', month);
-      
-      if (parentId) {
-        feeQuery = feeQuery.eq('parent_id', parentId);
-      }
+      if (parentId) feeQuery = feeQuery.eq('parent_id', parentId);
 
-      const { data: monthlyFees } = await feeQuery;
-
-      // 4. Fetch students directly (fallback for when no fees exist for the month)
-      const { data: allStudents } = await supabase
+      // Students are only needed as a fallback when a parent has no fee rows this month.
+      let studentQuery = supabase
         .from('students')
         .select('parent_id, first_name, last_name, classes:current_class_id(name)')
         .eq('school_id', schoolId)
         .eq('active', true);
+      if (parentId) studentQuery = studentQuery.eq('parent_id', parentId);
+
+      const [schoolRes, classRes, parentRes, feeRes, studentRes] = await Promise.all([
+        supabase.from('schools').select('school_name, logo_url').eq('id', schoolId).single(),
+        supabase.from('classes').select('id, name').eq('school_id', schoolId).order('name'),
+        parentQuery,
+        feeQuery,
+        studentQuery,
+      ]);
+
+      if (schoolRes.data) { setSchoolName(schoolRes.data.school_name); setLogo(schoolRes.data.logo_url); }
+      if (classRes.data) setClassList(classRes.data);
+      if (parentRes.error) throw parentRes.error;
+      const parentData = parentRes.data;
+      const monthlyFees = feeRes.data;
+      const allStudents = studentRes.data;
 
       // Helper to group by parent
       const parentInvoices: InvoiceData[] = [];
