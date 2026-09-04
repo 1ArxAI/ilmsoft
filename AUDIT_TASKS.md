@@ -22,7 +22,7 @@ B1–B4 done 2026-09-04: tsc clean, 0 npm vulnerabilities (react-router-dom 7.18
 - [x] **B2.** `npm audit fix` (react-router-dom → 7.18.x, ws); `tsc`, lint, tests, build green.
 - [x] **B3.** Parent-profile "Record Payment": send the page's `schoolId`, not `parent.school_id`.
 - [x] **B4.** Search filter injection: sanitise the term in PaymentPortalV2 and LedgerManager.
-- [~] **B5.** Deploy to Netlify; verify one payment from the parent profile on a test parent.
+- [~] **B5.** Pushed to `origin/master` as `e7edcb1` on 2026-09-04 (rebased on the three July commits; kept their `typecheck` script and `.editorconfig`, kept the deletion of the dead receipt test). Netlify deploy + one payment from the parent profile on a test parent: owner to confirm.
 
 ## Batch C — one fee system (decision 2026-09-04: keep what the schools use; retire the April tables)
 
