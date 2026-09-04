@@ -24,7 +24,7 @@ type Class = {
 };
 
 export const ClassesManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const [classes, setClasses] = useState<Class[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);

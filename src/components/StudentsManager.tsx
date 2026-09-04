@@ -34,7 +34,7 @@ export const StudentsManager = ({
   role?: Role;
   onViewParent?: (parentId: string) => void;
 }) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const { flash, showFlash } = useFlashMessage();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);

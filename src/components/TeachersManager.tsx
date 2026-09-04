@@ -25,7 +25,7 @@ const EMPTY = {
 };
 
 export const TeachersManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const [records, setRecords]       = useState<Teacher[]>([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);

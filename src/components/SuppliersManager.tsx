@@ -17,7 +17,7 @@ import { useSuppliers } from './suppliers/useSuppliers';
 import type { Supplier, ViewType } from './suppliers/types';
 
 export const SuppliersManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const { flash, showFlash } = useFlashMessage(4000);
   const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('list');

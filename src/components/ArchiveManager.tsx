@@ -13,7 +13,7 @@ interface ArchiveManagerProps {
 }
 
 export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const { flash, showFlash } = useFlashMessage(4000);
   const [subTab, setSubTab] = useState<'parents' | 'students'>('parents');
   const [loading, setLoading] = useState(true);
@@ -67,37 +67,14 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
     if (!deleteParentTarget) return;
     setDeleting(true);
     try {
-      // 1. Delete discounts & monthly fees for all students of this parent
-      const { data: parentStudents } = await supabase
-        .from('students')
-        .select('id')
-        .eq('parent_id', deleteParentTarget.id);
-      
-      const studentIds = (parentStudents || []).map(s => s.id);
-      
-      if (studentIds.length > 0) {
-        await supabase.from('discounts').delete().in('student_id', studentIds);
-        await supabase.from('student_monthly_fees').delete().in('student_id', studentIds);
-        await supabase.from('students').delete().in('id', studentIds);
-      }
-      
-      // 2. Delete ledger and payments
-      await supabase.from('ledger').delete().eq('parent_id', deleteParentTarget.id);
-      await supabase.from('payments').delete().eq('parent_id', deleteParentTarget.id);
-      
-      // 3. Delete parent
-      const { error } = await supabase
-        .from('parents')
-        .delete()
-        .eq('id', deleteParentTarget.id);
-        
+      // One transactional call: owner-only, refuses parents with any financial history.
+      const { error } = await supabase.rpc('delete_parent_permanently', { p_parent_id: deleteParentTarget.id });
       if (error) throw error;
-      
       showFlash(`Parent "${deleteParentTarget.first_name} ${deleteParentTarget.last_name}" permanently deleted.`);
       setDeleteParentTarget(null);
       await loadData();
     } catch (err: any) {
-      showFlash('Failed to delete parent: ' + err.message);
+      showFlash('Could not delete: ' + err.message);
     } finally {
       setDeleting(false);
     }
@@ -107,25 +84,13 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
     if (!deleteStudentTarget) return;
     setDeleting(true);
     try {
-      // 1. Delete discounts
-      await supabase.from('discounts').delete().eq('student_id', deleteStudentTarget.id);
-      
-      // 2. Delete student monthly fees
-      await supabase.from('student_monthly_fees').delete().eq('student_id', deleteStudentTarget.id);
-      
-      // 3. Delete student
-      const { error } = await supabase
-        .from('students')
-        .delete()
-        .eq('id', deleteStudentTarget.id);
-        
+      const { error } = await supabase.rpc('delete_student_permanently', { p_student_id: deleteStudentTarget.id });
       if (error) throw error;
-      
       showFlash(`Student "${deleteStudentTarget.first_name} ${deleteStudentTarget.last_name}" permanently deleted.`);
       setDeleteStudentTarget(null);
       await loadData();
     } catch (err: any) {
-      showFlash('Failed to delete student: ' + err.message);
+      showFlash('Could not delete: ' + err.message);
     } finally {
       setDeleting(false);
     }

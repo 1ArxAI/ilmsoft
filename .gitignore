@@ -28,3 +28,6 @@ dist-ssr
 
 # Archives
 /archives/
+
+# Local database backups (contain real customer data)
+/backups/

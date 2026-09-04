@@ -119,3 +119,11 @@ export function validateAmount(value: unknown): { valid: boolean; error?: string
   }
   return { valid: true };
 }
+
+/**
+ * Strip characters that PostgREST treats as filter syntax (`, ( ) . "`) and LIKE wildcards
+ * before interpolating a user search term into an `.or(...ilike...)` filter string.
+ */
+export function sanitizeSearchTerm(term: string): string {
+  return term.replace(/[,()."%_\\]/g, '').trim();
+}

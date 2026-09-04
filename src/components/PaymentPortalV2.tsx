@@ -1,3 +1,4 @@
+import { sanitizeSearchTerm } from '../lib/validation';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/Button';
@@ -43,6 +44,7 @@ export const PaymentPortalV2 = ({
   const loadParents = useCallback(async () => {
     setLoading(true);
     try {
+      const term = sanitizeSearchTerm(debouncedSearch);
       const { data, error } = await supabase
         .from('parents')
         .select(`
@@ -50,7 +52,7 @@ export const PaymentPortalV2 = ({
           parent_balances ( balance )
         `)
         .eq('school_id', schoolId)
-        .or(`first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,contact.ilike.%${debouncedSearch}%`)
+        .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,contact.ilike.%${term}%`)
         .order('first_name');
 
       if (error) throw error;

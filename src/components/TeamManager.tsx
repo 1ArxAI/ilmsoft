@@ -76,13 +76,15 @@ export const TeamManager = ({ schoolId }: { schoolId: string }) => {
       const inviteToken = crypto.randomUUID();
       const { error } = await supabase
         .from('school_members')
-        .insert({
+        .upsert({
           school_id: schoolId,
           email,
           role: 'manager',
           status: 'pending',
           invite_token: inviteToken,
-        });
+          user_id: null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'school_id,email' });
 
       if (error) {
         if (error.code === '23505') {

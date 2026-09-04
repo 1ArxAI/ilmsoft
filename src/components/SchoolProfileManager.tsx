@@ -45,7 +45,7 @@ const ColorInput = ({ label, value, onChange, disabled }: { label: string, value
 );
 
 export const SchoolProfileManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const { profile, refreshProfile } = useAuth();
   const { flash, showFlash } = useFlashMessage(10000);
 

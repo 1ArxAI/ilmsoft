@@ -15,7 +15,7 @@ const EMPTY = {
 };
 
 export const ExtraFeesManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const [fees, setFees] = useState<ExtraFee[]>([]);
   const [classList, setClassList] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);

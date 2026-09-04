@@ -72,7 +72,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
               </select>
             </div>
 
-            <Input label="Monthly Fee *" type="number" placeholder="Enter full fee" value={form.monthly_fee || ''} onChange={e => set('monthly_fee', e.target.value)} required />
+            <Input label="Class Fee (from current class)" type="number" value={form.monthly_fee || ''} readOnly />
             <Input label="CNIC" placeholder="XXXXX-XXXXXXX-X" value={form.cnic} onChange={e => set('cnic', e.target.value)} />
             <Input label="Date of Birth" type="date" value={form.date_of_birth} onChange={e => set('date_of_birth', e.target.value)} />
           </div>

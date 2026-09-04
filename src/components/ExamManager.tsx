@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { ExamTerm, Class } from '../lib/supabase';
+import type { ExamTerm, Class, Role } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { 
   Plus, Calendar, Trash2, Edit2, 
@@ -13,9 +13,10 @@ import './ExamManager.css';
 
 interface ExamManagerProps {
   schoolId: string;
+  role?: Role;
 }
 
-const ExamManager = ({ schoolId }: ExamManagerProps) => {
+const ExamManager = ({ schoolId, role }: ExamManagerProps) => {
   const [terms, setTerms] = useState<ExamTerm[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +197,7 @@ const ExamManager = ({ schoolId }: ExamManagerProps) => {
               </div>
               <div className="exam-card-footer">
                 <button onClick={() => openEdit(term)} title="Edit Term"><Edit2 size={16} /></button>
-                <button onClick={() => handleDelete(term.id)} className="delete" title="Delete Term"><Trash2 size={16} /></button>
+                {role === 'owner' && <button onClick={() => handleDelete(term.id)} className="delete" title="Delete Term"><Trash2 size={16} /></button>}
               </div>
             </div>
           ))}

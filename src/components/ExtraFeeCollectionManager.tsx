@@ -7,7 +7,7 @@ import { Button } from './ui/Button';
 import { CheckCircle, MessageCircle, DollarSign, BookOpen, AlertCircle } from 'lucide-react';
 import './managers.css';
 
-export const ExtraFeeCollectionManager = ({ schoolId }: { schoolId: string; role?: Role }) => {
+export const ExtraFeeCollectionManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
   const { profile } = useAuth();
   const [fees, setFees] = useState<ExtraFee[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -328,14 +328,16 @@ export const ExtraFeeCollectionManager = ({ schoolId }: { schoolId: string; role
                               <Button size="sm" variant="outline" onClick={() => sendWhatsApp({ student, fee: selectedFee, parent })}>
                                 <MessageCircle size={14} /> Receipt
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                style={{ color: 'var(--danger)', borderColor: 'var(--danger-light)' }} 
-                                onClick={() => setUnpayTarget(paidStudentsMap.get(student.id)!)}
-                              >
-                                Undo
-                              </Button>
+                              {role === 'owner' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  style={{ color: 'var(--danger)', borderColor: 'var(--danger-light)' }} 
+                                  onClick={() => setUnpayTarget(paidStudentsMap.get(student.id)!)}
+                                >
+                                  Undo
+                                </Button>
+                              )}
                             </div>
                           ) : (
                             <Button size="sm" onClick={() => setPayStudent(student)}>

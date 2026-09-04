@@ -44,21 +44,18 @@ export const JoinInvite = () => {
   /* ── Step 2: If already logged in, claim invite ───────────── */
   useEffect(() => {
     if (session?.user && inviteInfo && !signupDone) {
-      handleClaim(session.user.id);
+      handleClaim();
     }
   }, [session?.user, inviteInfo]);
 
-  const handleClaim = async (userId: string) => {
+  const handleClaim = async () => {
     if (!token) return;
     setClaiming(true);
     try {
-      const { data: schoolId, error } = await supabase.rpc('claim_invite', {
-        p_token: token,
-        p_user_id: userId,
-      });
+      const { data: schoolId, error } = await supabase.rpc('claim_invite', { p_token: token });
 
       if (error || !schoolId) {
-        setError('Could not accept invitation. The link may have expired.');
+        setError(error?.message || 'Could not accept invitation. The link may have expired.');
       } else {
         setSignupDone(true);
         // Navigate to dashboard after a short delay
@@ -99,27 +96,12 @@ export const JoinInvite = () => {
     }
 
     if (data.user) {
-      // User created — now claim the invite
-      // The onAuthStateChange in AuthContext will fire and handle claiming
-      // via the useEffect above. But we also handle it here for reliability.
+      // The signup trigger links this account to the invitation (matched by token + email).
       setSignupDone(true);
-
       if (data.session) {
-        // Session available — claim immediately
-        const { data: schoolId, error: claimError } = await supabase.rpc('claim_invite', {
-          p_token: token,
-          p_user_id: data.user.id,
-        });
-        if (claimError || !schoolId) {
-          setSignupDone(false);
-          setError('Account created but could not link to school. Please contact the school owner.');
-        } else {
-          setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
-        }
-      } else {
-        // Email confirmation required — they'll claim on first login
-        // The AuthContext's fetchProfile will detect the pending membership
+        setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
       }
+      // Otherwise email confirmation is on: they confirm, sign in, and land in the school.
     }
 
     setSigningUp(false);
@@ -161,7 +143,7 @@ export const JoinInvite = () => {
               Your account has been linked to <strong>{inviteInfo?.school_name}</strong>
             </p>
             <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>
-              Redirecting to dashboard...
+              {session ? 'Redirecting to dashboard...' : 'Confirm your email from the message we just sent, then sign in.'}
             </p>
           </div>
         </div>

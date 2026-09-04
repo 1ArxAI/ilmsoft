@@ -514,7 +514,7 @@ export const Dashboard = () => {
           {tab === 'finances-income' && <Suspense fallback={<ManagerFallback />}><IncomeManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'finances-expense' && <Suspense fallback={<ManagerFallback />}><ExpenseManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'finances-suppliers' && <Suspense fallback={<ManagerFallback />}><SuppliersManager schoolId={profile.id} role={role || undefined} /></Suspense>}
-          {tab === 'finances-extra-fees' && <Suspense fallback={<ManagerFallback />}><ExtraFeeCollectionManager schoolId={profile.id} /></Suspense>}
+          {tab === 'finances-extra-fees' && <Suspense fallback={<ManagerFallback />}><ExtraFeeCollectionManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'finances-custom-receipt' && <Suspense fallback={<ManagerFallback />}><CustomReceiptManager schoolId={profile.id} /></Suspense>}
           {tab === 'team' && <Suspense fallback={<ManagerFallback />}><TeamManager schoolId={profile.id} /></Suspense>}
           {tab === 'profile' && <Suspense fallback={<ManagerFallback />}><SchoolProfileManager schoolId={profile.id} role={role || undefined} /></Suspense>}
@@ -547,7 +547,7 @@ export const Dashboard = () => {
           )}
           {tab === 'fees-generate' && <Suspense fallback={<ManagerFallback />}><FeeGenerationManager schoolId={profile.id} /></Suspense>}
           {tab === 'fees-missing' && <Suspense fallback={<ManagerFallback />}><MissingFeeManager schoolId={profile.id} /></Suspense>}
-          {tab === 'exams-terms' && <Suspense fallback={<ManagerFallback />}><ExamManager schoolId={profile.id} /></Suspense>}
+          {tab === 'exams-terms' && <Suspense fallback={<ManagerFallback />}><ExamManager schoolId={profile.id} role={role || undefined} /></Suspense>}
           {tab === 'exams-promotion' && <Suspense fallback={<ManagerFallback />}><StudentPromotion schoolId={profile.id} /></Suspense>}
           {tab === 'exams-results' && <Suspense fallback={<ManagerFallback />}><ExamResultsManager schoolId={profile.id} /></Suspense>}
           {tab === 'exams-results-cards' && <Suspense fallback={<ManagerFallback />}><ResultCardManager schoolId={profile.id} /></Suspense>}

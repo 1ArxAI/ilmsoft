@@ -1,3 +1,4 @@
+import { sanitizeSearchTerm } from '../lib/validation';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/Button';
@@ -72,6 +73,7 @@ export const LedgerManager = ({
     setLoading(true);
     try {
       // Join with parent_balances view
+      const term = sanitizeSearchTerm(debouncedSearch);
       const { data, error } = await supabase
         .from('parents')
         .select(`
@@ -92,7 +94,7 @@ export const LedgerManager = ({
         `)
         .eq('school_id', schoolId)
         .eq('is_active', true)
-        .or(`first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,contact.ilike.%${debouncedSearch}%`)
+        .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,contact.ilike.%${term}%`)
         .order('first_name');
 
       if (error) throw error;

@@ -36,7 +36,7 @@ export const ParentsManager = ({
   initialViewParentId?: string;
   onClearInitialParent?: () => void;
 }) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const { flash, showFlash } = useFlashMessage(4000);
   
   const {
@@ -388,6 +388,7 @@ export const ParentsManager = ({
         <ParentDetailView
           key={`${viewTarget.id}-${refreshCount}`}
           parent={viewTarget}
+          schoolId={schoolId}
           classes={classes}
           onBack={() => setViewTarget(null)}
           onAddChild={openAddChild}

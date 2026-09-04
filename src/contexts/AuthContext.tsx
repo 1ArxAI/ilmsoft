@@ -50,6 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select('school_id, role, status')
         .eq('user_id', userId)
         .eq('status', 'active')
+        .order('role', { ascending: false })   // 'owner' before 'manager'
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle();
 
       if (member) {

@@ -10,6 +10,7 @@ import { useFlashMessage } from '../../hooks/useFlashMessage';
 
 interface ParentDetailViewProps {
   parent: Parent;
+  schoolId: string;
   classes: Class[];
   onBack: () => void;
   onAddChild: (p: Parent) => void;
@@ -21,6 +22,7 @@ interface ParentDetailViewProps {
 
 export const ParentDetailView = ({
   parent,
+  schoolId,
   classes,
   onBack,
   onAddChild,
@@ -133,7 +135,7 @@ export const ParentDetailView = ({
     setSavingPayment(true);
     try {
       const { error } = await supabase.from('payments').insert({
-        school_id: parent.school_id,
+        school_id: schoolId,
         parent_id: parent.id,
         received_amount: pkrAmount,
         payment_method: method,

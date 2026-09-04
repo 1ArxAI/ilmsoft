@@ -38,7 +38,7 @@ const PAGE_SIZE = 25;
 const PAYMENT_METHODS = ['Cash', 'Bank Transfer', 'Cheque', 'EasyPaisa', 'JazzCash'];
 
 export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
-  const isOwner = !role || role === 'owner';
+  const isOwner = role === 'owner';
   const { flash, showFlash } = useFlashMessage(4000);
   const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [categories, setCategories] = useState<IncomeCategory[]>([]);
