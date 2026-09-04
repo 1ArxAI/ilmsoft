@@ -1,0 +1,20 @@
+-- ROLLBACK SNAPSHOT for Batch C6, 2026-09-04T23:14:22.497Z (rows as JSON; restore with INSERT ... SELECT * FROM json_populate_record)
+-- payment: {"id":"dd67bee9-4653-42e9-8180-907fde40ae4a","school_id":"3a13ea3e-b5c2-4129-8313-58e034a84141","parent_id":"c4b28a13-37e2-41c2-ba2e-ee0ca3e52a2e","received_amount":900,"payment_method":"cash","received_by":null,"notes":"","received_at":"2026-05-04T05:29:41.65+00:00"}
+-- allocation: {"id":"8a5ad940-6ee6-4fa2-b139-a6aeac7e9745","payment_id":"dd67bee9-4653-42e9-8180-907fde40ae4a","student_monthly_fee_id":"82a0e150-8333-4633-a19e-a2db1faaa2bc","allocated_amount":900,"created_at":"2026-05-04T05:29:41.914787+00:00"}
+-- parent: {"id":"f3911e14-b143-44ce-b8e5-ca7f1d2e79c1","opening_balance":-8650}
+-- parent: {"id":"878f84b9-3664-493e-a00d-2b4dab4fea4b","opening_balance":1400}
+-- parent: {"id":"c4b28a13-37e2-41c2-ba2e-ee0ca3e52a2e","opening_balance":900}
+-- parent: {"id":"8be4ee20-2775-4e91-90ca-bd4ed295188d","opening_balance":3000}
+-- parent: {"id":"b48144d8-ee5f-4a8e-887c-25021064b3b8","opening_balance":1500}
+-- parent: {"id":"a5dd6031-048d-429b-8bdd-192d736d3ce5","opening_balance":1200}
+-- parent: {"id":"e06fdee2-82e1-4851-b863-80a678c12034","opening_balance":-9100}
+-- parent: {"id":"fa8aed62-e3b9-47ce-ae9d-2561e2c91c8c","opening_balance":2800}
+-- parent: {"id":"be831b95-4005-4377-9df0-1aa6764ea0c2","opening_balance":9700}
+-- parent: {"id":"f07d9d52-5b12-44fa-91f4-30109a703e1c","opening_balance":1500}
+-- parent: {"id":"4fa161da-7913-4a37-88d7-500ff58cf540","opening_balance":1500}
+-- parent: {"id":"982cabf6-53bc-4e71-b383-f06b40cec450","opening_balance":3000}
+-- parent: {"id":"0225b958-91a4-4670-aebf-5cf9e0772d33","opening_balance":900}
+-- parent: {"id":"2437a2fa-fc77-4b8b-aaec-4c195f8ce0cb","opening_balance":3000}
+-- parent: {"id":"46dcab6f-e919-48bb-af6e-cb8d8c5a14d5","opening_balance":1000}
+-- parent: {"id":"87c5bdc4-09bd-47f7-8f23-7ca3d6ed020f","opening_balance":2000}
+-- undo 1b: DELETE FROM payment_allocations WHERE payment_id='73b5ebdb-007e-4f04-b95d-0682615c9cf7';
