@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole]             = useState<Role | null>(null);
   const [loading, setLoading]       = useState(true);
   const userIdRef = useRef<string | null>(null);
+  const inflightRef = useRef<Promise<void> | null>(null);
 
 
   /**
@@ -42,13 +43,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * 1. Check school_members — if user is an active member, use that school
    * 2. Fallback: check schools.user_id — existing owner behavior
    */
-  const fetchProfile = useCallback(async (userId: string): Promise<void> => {
+  const fetchProfile = useCallback((userId: string): Promise<void> => {
+    if (inflightRef.current) return inflightRef.current;
+    const run = (async () => {
     for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
       // Step 1: Check if user is a member (owner or manager) of any school
+      // One round trip: the membership row with its school embedded.
       const { data: member } = await supabase
         .from('school_members')
-        .select('school_id, role, status')
+        .select('role, schools:school_id(id, user_id, school_name, contact, email, logo_url, primary_color, secondary_color, tertiary_color, total_credits, credit_expires_at, created_at)')
         .eq('user_id', userId)
         .eq('status', 'active')
         .order('role', { ascending: false })   // 'owner' before 'manager'
@@ -56,23 +60,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .limit(1)
         .maybeSingle();
 
-      if (member) {
+      const embedded = member?.schools as unknown as SchoolProfile | SchoolProfile[] | null | undefined;
+      const school = Array.isArray(embedded) ? embedded[0] : embedded;
+      if (member && school) {
         setRole(member.role as Role);
-        const { data: school, error: schoolError } = await supabase
-          .from('schools')
-          .select('id, user_id, school_name, contact, email, logo_url, primary_color, secondary_color, tertiary_color, total_credits, credit_expires_at, created_at')
-          .eq('id', member.school_id)
-          .single();
-
-        if (school) {
-          setProfile(school as SchoolProfile);
-          // Members (managers invited to existing schools) don't get free credits
-        } else if (schoolError) {
-          // Only log in development
-          if (import.meta.env.DEV) {
-            console.error('Error fetching school by member:', schoolError.message);
-          }
-        }
+        setProfile(school);
         return;
       }
 
@@ -115,6 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return;
     }
+    })().finally(() => { inflightRef.current = null; });
+    inflightRef.current = run;
+    return run;
   }, []);
 
   useEffect(() => {
@@ -140,14 +135,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        if (userIdRef.current !== session.user.id) {
-          setLoading(true);
-          userIdRef.current = session.user.id;
-        }
+        // supabase-js emits INITIAL_SESSION, then SIGNED_IN (often several times) on every page load, and
+        // TOKEN_REFRESHED hourly. The profile only needs loading when the signed-in user actually changes;
+        // initSession() above handles the first load.
+        if (event === 'TOKEN_REFRESHED' || userIdRef.current === session.user.id) return;
+        setLoading(true);
+        userIdRef.current = session.user.id;
         fetchProfile(session.user.id).finally(() => setLoading(false));
       } else {
         userIdRef.current = null;

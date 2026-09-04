@@ -158,9 +158,9 @@ export const Dashboard = () => {
     }
   }, [profile]);
 
-  useEffect(() => { if (profile) { checkCredits(); loadAdminSettings(); } }, [profile, checkCredits, loadAdminSettings]);
+  useEffect(() => { if (profile) checkCredits(); }, [profile, checkCredits]);
   useEffect(() => { if (tab === 'history' && profile) loadHistory(); }, [tab, profile, loadHistory]);
-  useEffect(() => { if (tab === 'buy') loadAdminSettings(); }, [tab, loadAdminSettings]);
+  useEffect(() => { if (tab === 'buy' && !adminSettings) loadAdminSettings(); }, [tab, adminSettings, loadAdminSettings]);
   useEffect(() => {
     const s = location.state as { showBuyCredits?: boolean };
     if (s?.showBuyCredits) { setTab('buy'); navigate('/dashboard', { replace: true, state: {} }); }

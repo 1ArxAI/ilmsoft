@@ -65,7 +65,7 @@ Migration: `sql/batch_C_one_fee_system.sql`. Rollback: `sql/rollback/pre_batch_C
 
 Measured: Tokyo region costs 260 ms per raw query, 300–800 ms per REST call from the UK; boot made 13 requests for 3 rows (5.3 s to usable, dev mode); a screen open settled in 1.4 s with duplicate + spurious fetches. Bundle (210 KB gz) and indexes are fine.
 
-- [ ] **G1. Boot path.** One query `school_members.select('role, schools:school_id(...)')`; ignore INITIAL_SESSION and TOKEN_REFRESHED in the auth listener; fetch admin_settings only on the Buy tab.
+- [x] **G1. Boot path.** Done 2026-09-05. Measured on the same page load, dev server, real school: 13 calls / 5.3 s → 2 calls / 1.8 s, no further calls after 15 s. Root cause found by tracing: supabase-js emits SIGNED_IN repeatedly after INITIAL_SESSION and each one refetched. The second remaining call is the owner fallback for schools without a membership row (backfilled in G3). One query `school_members.select('role, schools:school_id(...)')`; ignore INITIAL_SESSION and TOKEN_REFRESHED in the auth listener; fetch admin_settings only on the Buy tab.
 - [ ] **G2. Refetch storms.** LedgerManager / PaymentPortalV2: drop selectedParent from loadParents deps; CustomReceiptManager: derive prefix in memory; ParentsManager: stop remounting ParentDetailView via key.
 - [ ] **G3. Set-based policies.** `sql/batch_F_fast_policies.sql` (measured 2.4–7.5× faster, same permissions). Dry-run harness + apply.
 - [ ] **G4. Waterfalls → single calls.** InvoicePrinter (5→1), PaymentReceipt (4→1), ExamResultsSpreadsheet per class (5→1), ResultCardManager/Printer, useSuppliers, ExtraFeeCollectionManager; printers take school name/logo from profile.

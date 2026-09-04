@@ -70,8 +70,20 @@ CREATE POLICY payment_allocations_select ON public.payment_allocations FOR SELEC
 DROP POLICY IF EXISTS audit_logs_select ON public.audit_logs;
 CREATE POLICY audit_logs_select ON public.audit_logs FOR SELECT USING (school_id IN (SELECT owner_school_ids()));
 
--- the same treatment for the three tables that kept their old policies
+-- the same treatment for the tables that kept their old policies
 DROP POLICY IF EXISTS "Read own school members" ON public.school_members;
 CREATE POLICY "Read own school members" ON public.school_members FOR SELECT USING (school_id IN (SELECT member_school_ids()));
+
+-- A manager must be able to read the school they belong to (AuthContext embeds schools via school_members).
+-- Until now only the owner (user_id = auth.uid()) and platform admins could; managers would get an empty dashboard.
+DROP POLICY IF EXISTS "Schools can view their own profile" ON public.schools;
+CREATE POLICY "Schools can view their own profile" ON public.schools FOR SELECT USING (id IN (SELECT member_school_ids()));
+
+-- Owners of the three schools created before school_members existed have no membership row; add it so
+-- every user resolves through the same single query.
+INSERT INTO public.school_members (school_id, user_id, email, role, status)
+SELECT s.id, s.user_id, s.email, 'owner', 'active' FROM public.schools s
+WHERE NOT EXISTS (SELECT 1 FROM public.school_members m WHERE m.school_id = s.id AND m.user_id = s.user_id)
+ON CONFLICT (school_id, email) DO UPDATE SET user_id = EXCLUDED.user_id, role = 'owner', status = 'active';
 
 COMMIT;
