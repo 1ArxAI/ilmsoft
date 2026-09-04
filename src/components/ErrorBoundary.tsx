@@ -29,9 +29,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-    // Treat unhandled promise rejections (like Supabase API timeouts) as UI crashes
-    this.setState({ hasError: true, error: event.reason instanceof Error ? event.reason : new Error(String(event.reason)) });
-    event.preventDefault();
+    // Log only. Unhandled rejections also come from browser extensions (MetaMask, wallets, ad blockers)
+    // and must not take down the app; every Supabase call in the app checks its own error.
+    console.error('Unhandled promise rejection:', event.reason);
   };
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
