@@ -60,3 +60,18 @@ Migration: `sql/batch_C_one_fee_system.sql`. Rollback: `sql/rollback/pre_batch_C
 - [x] ESLint: 0 errors (unused `CreditGuard` removed; retry loop in AuthContext; `resetForm` ordering in IncomeManager).
 - [x] DB: logo bucket 2 MB / images only; `admin_settings` 6 → 3 policies. `sql/batch_E_hygiene.sql`, applied 2026-09-05 (7/7), verified.
 - [ ] `UpdatePassword` recovery-event check (low value: a signed-in user changing their own password is normal). Skipped.
+
+## Batch G — speed (audit 2026-09-05, report: ilmsoft Speed Audit artifact)
+
+Measured: Tokyo region costs 260 ms per raw query, 300–800 ms per REST call from the UK; boot made 13 requests for 3 rows (5.3 s to usable, dev mode); a screen open settled in 1.4 s with duplicate + spurious fetches. Bundle (210 KB gz) and indexes are fine.
+
+- [ ] **G1. Boot path.** One query `school_members.select('role, schools:school_id(...)')`; ignore INITIAL_SESSION and TOKEN_REFRESHED in the auth listener; fetch admin_settings only on the Buy tab.
+- [ ] **G2. Refetch storms.** LedgerManager / PaymentPortalV2: drop selectedParent from loadParents deps; CustomReceiptManager: derive prefix in memory; ParentsManager: stop remounting ParentDetailView via key.
+- [ ] **G3. Set-based policies.** `sql/batch_F_fast_policies.sql` (measured 2.4–7.5× faster, same permissions). Dry-run harness + apply.
+- [ ] **G4. Waterfalls → single calls.** InvoicePrinter (5→1), PaymentReceipt (4→1), ExamResultsSpreadsheet per class (5→1), ResultCardManager/Printer, useSuppliers, ExtraFeeCollectionManager; printers take school name/logo from profile.
+- [ ] **G5. Aggregate in the DB.** FeeStats ledger date filter + balance filter; `class_student_counts` view; admin `school_financial_totals` RPC; `missing_fee_parents` RPC + set-based generate; suppliers trust `current_balance`.
+- [ ] **G6. Caching.** `SWRConfig` revalidateOnFocus off; shared `useClasses`; SWR keys for FeeStats/Ledger/Income/Expense/Suppliers.
+- [ ] **G7. Column trims + memoization.** Remove `select('*')` (5 places), classes selects to `id,name`, CustomReceipt parents 17→4 cols; `useMemo` in ExpenseManager/InvoicePrinter; paginate Ledger/PaymentPortal/CustomReceipts.
+- [ ] **G8. Font + icons.** System font stack instead of Google Fonts `@import` (or self-host); optionally split the icon chunk.
+- [!] **G9. Region move Tokyo → Mumbai.** New Supabase project, restore from `backups/` (schema.sql + data incl. auth.users), switch keys in Netlify + `.env.local`. Needs a write freeze (~2 h) and the owner's decision.
+
