@@ -42,7 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * 1. Check school_members — if user is an active member, use that school
    * 2. Fallback: check schools.user_id — existing owner behavior
    */
-  const fetchProfile = useCallback(async (userId: string, attempt = 1): Promise<void> => {
+  const fetchProfile = useCallback(async (userId: string): Promise<void> => {
+    for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
       // Step 1: Check if user is a member (owner or manager) of any school
       const { data: member } = await supabase
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (shouldRetry) {
           await new Promise(r => setTimeout(r, RETRY_DELAY * attempt));
-          return fetchProfile(userId, attempt + 1);
+          continue;
         }
         
         // Only log in development
@@ -105,12 +106,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       if (attempt <= MAX_RETRIES) {
         await new Promise(r => setTimeout(r, RETRY_DELAY * attempt));
-        return fetchProfile(userId, attempt + 1);
+        continue;
       }
       // Only log in development
       if (import.meta.env.DEV) {
         console.error('Unexpected error fetching profile', err);
       }
+    }
+    return;
     }
   }, []);
 

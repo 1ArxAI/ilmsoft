@@ -40,7 +40,11 @@ Migration: `sql/batch_C_one_fee_system.sql`. Rollback: `sql/rollback/pre_batch_C
 - [x] **C3. Drop the obsolete system.** Triggers on `discounts`/`fee_structures`; tables `fee_structures`, `discounts`, `monthly_fees`, `fee_payments`, `fee_receipts`; column `students.discount_id`; functions `generate_monthly_fees`, `get_parent_balance`, `get_unpaid_months_summary`, both `record_parent_payment`, `generate_receipt_number`, `generate_receipt_no()`, `create_receipt_sequence`, `create_school_on_signup`, `handle_new_user`, `recalculate_parent_balances`. App: remove the two `discounts` deletes in ArchiveManager and the `fee_receipts` code in receiptGenerator (receipts get rebuilt on `payments` in C4).
 - [x] **C4. Legacy receipt tables.** Receipts are rendered on the fly (PaymentReceipt.tsx), so nothing is stored. Dropped `fee_receipts`, `fee_payments`, `generate_receipt_no(uuid)`; deleted unused `src/lib/receiptGenerator.ts` + test + 64 lines of unused types. Applied 2026-09-04 (9/9), verified. Backup `backups/2026-09-04T16-44-14-050Z/`, rollback `sql/rollback/pre_batch_C4_2026-09-04.sql`.
 - [x] **C5. Class fee change propagation.** Decided 2026-09-04: no per-student override; a class fee change refreshes every student in that class (trigger in C1) and the next generation bills class fee − discount.
-- [ ] **C6. Opening balances** (16 missing ledger rows, 2 negative) and the 1 orphaned payment — after the school confirms figures.
+- [!] **C6. Data repairs — waiting for the school's confirmation (real school only).** List prepared 2026-09-04 (read-only):
+  - 14 real-school parents have an `opening_balance` value with no ledger row. For 9 of them today's ledger balance equals exactly minus that value, which suggests the "opening balance" was the first month's fee that the April generation billed anyway, not an additional prior debt. Back-filling blindly would double-charge about Rs 33,400. Per parent: confirm whether the amount is a prior debt on top of monthly fees (add a debit) or not (clear the column).
+  - The 2 negative opening balances are in the dummy school (Ali Asghar −8,650; Iftekhar Ahmad −9,100): ignore.
+  - 1 payment without ledger credit: Muhammad Usman, Rs 900 cash on 4 May 2026; its credit was deleted on 8 May by a direct database action (not the app) while the payment and allocation remained. Confirm he paid; if yes, restore the credit (balance 0); if no, remove payment + allocation.
+  - 5 parents have ledger opening rows but `opening_balance` column 0 (cosmetic): sync the column from the ledger.
 
 ## Batch D — access model
 
@@ -51,5 +55,10 @@ Migration: `sql/batch_C_one_fee_system.sql`. Rollback: `sql/rollback/pre_batch_C
 
 ## Batch E — hygiene
 
-- [ ] Scheduled backup: run `scripts/db_dump.mjs` nightly (launchd on the owner's Mac) and prune old folders.
-- [ ] Drop dead functions and duplicate policies; archive legacy tables; logo bucket limits; `UpdatePassword` recovery check; CSP `unsafe-eval`; ErrorBoundary rejection swallowing; ESLint errors.
+- [x] Scheduled backup: `scripts/nightly_backup.sh` via launchd agent `~/Library/LaunchAgents/com.ilmsoft.dbdump.plist` (03:00 daily, log `~/Library/Logs/ilmsoft/backup.log`, keeps 14). Installed and run once 2026-09-04.
+- [x] ErrorBoundary no longer turns unhandled rejections (MetaMask etc.) into a fatal screen (`a92166e`).
+- [x] Extra-fee collection no longer writes ledger rows (they used a reference type the ledger rejects, so none were ever written; extra fees live in `extra_fee_payments`).
+- [x] CSP without `unsafe-eval`.
+- [x] ESLint: 0 errors (unused `CreditGuard` removed; retry loop in AuthContext; `resetForm` ordering in IncomeManager).
+- [~] DB: logo bucket 2 MB / images only; `admin_settings` 6 → 3 policies. `sql/batch_E_hygiene.sql`, dry run 7/7, awaiting owner apply.
+- [ ] `UpdatePassword` recovery-event check (low value: a signed-in user changing their own password is normal). Skipped.

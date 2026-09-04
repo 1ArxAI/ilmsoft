@@ -121,6 +121,18 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
     loadData();
   }, [loadData]);
 
+  const resetForm = useCallback(() => {
+    setFormData({
+      category_id: categories[0]?.id || '',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      payment_method: 'Cash',
+      description: '',
+      additional_notes: ''
+    });
+    setEditingId(null);
+  }, [categories]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.category_id || !formData.amount) {
@@ -164,19 +176,7 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
     } catch (err: any) {
       showFlash('Error saving income: ' + err.message);
     }
-  }, [schoolId, formData, editingId, showFlash, loadRecords]);
-
-  const resetForm = () => {
-    setFormData({
-      category_id: categories[0]?.id || '',
-      amount: '',
-      date: new Date().toISOString().split('T')[0],
-      payment_method: 'Cash',
-      description: '',
-      additional_notes: ''
-    });
-    setEditingId(null);
-  };
+  }, [schoolId, formData, editingId, showFlash, loadRecords, resetForm]);
 
   const startEdit = (record: IncomeRecord) => {
     setEditingId(record.id);
@@ -237,12 +237,12 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
     });
   };
 
-  const filteredRecords = records.filter(r => {
+  const filteredRecords = useMemo(() => records.filter(r => {
     const matchesSearch = r.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          r.category_name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'all' || r.category_id === filterCategory;
     return matchesSearch && matchesCategory;
-  });
+  }), [records, searchQuery, filterCategory]);
 
   const totalIncome = filteredRecords.reduce((sum, r) => sum + r.amount, 0);
 

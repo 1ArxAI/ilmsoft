@@ -137,31 +137,6 @@ export const ExtraFeeCollectionManager = ({ schoolId, role }: { schoolId: string
       
       if (error) throw error;
       
-      // RECORD IN LEDGER
-      const monthStr = selectedFee.due_date.substring(0, 7);
-      await supabase.from('ledger').insert([
-        {
-          school_id: schoolId,
-          parent_id: payStudent.parent_id,
-          amount: selectedFee.amount,
-          entry_type: 'debit',
-          description: `${selectedFee.name} (One-Time Fee)`,
-          reference_id: data.id,
-          reference_type: 'fee',
-          month: monthStr
-        },
-        {
-          school_id: schoolId,
-          parent_id: payStudent.parent_id,
-          amount: selectedFee.amount,
-          entry_type: 'credit',
-          description: `${selectedFee.name} Payment`,
-          reference_id: data.id,
-          reference_type: 'payment',
-          month: monthStr
-        }
-      ]);
-      
       showFlash(`Successfully collected Rs ${selectedFee.amount} for ${payStudent.first_name}`);
       
       // Update local state
@@ -186,9 +161,6 @@ export const ExtraFeeCollectionManager = ({ schoolId, role }: { schoolId: string
     if (!unpayTarget) return;
     setUnpaying(true);
     try {
-      // DELETE FROM LEDGER FIRST
-      await supabase.from('ledger').delete().eq('reference_id', unpayTarget.id);
-      
       const { error } = await supabase.from('extra_fee_payments').delete().eq('id', unpayTarget.id);
       if (error) throw error;
       showFlash('Payment removed (marked as unpaid)');
