@@ -2,6 +2,8 @@
 
 Rule for every task: **Plan → Perform → Test → Verify.** Production database. Each DB task is first dry-run inside a transaction that is rolled back, then applied, then verified from the catalog and from the public REST API. Pre-state DDL is snapshotted before any change so it can be restored.
 
+Real customer data: only the school owned by `babulilm333@gmail.com` (all-caps BAB UL ILM, id `3a13ea3e…`). Every other school is a test/dummy account; use those for test writes.
+
 Status: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked / needs decision
 
 ## Batch A — close the open doors (SQL only, no app change)
@@ -22,7 +24,7 @@ B1–B4 done 2026-09-04: tsc clean, 0 npm vulnerabilities (react-router-dom 7.18
 - [x] **B2.** `npm audit fix` (react-router-dom → 7.18.x, ws); `tsc`, lint, tests, build green.
 - [x] **B3.** Parent-profile "Record Payment": send the page's `schoolId`, not `parent.school_id`.
 - [x] **B4.** Search filter injection: sanitise the term in PaymentPortalV2 and LedgerManager.
-- [~] **B5.** Pushed to `origin/master` as `e7edcb1` on 2026-09-04 (rebased on the three July commits; kept their `typecheck` script and `.editorconfig`, kept the deletion of the dead receipt test). Netlify deploy + one payment from the parent profile on a test parent: owner to confirm.
+- [x] **B5.** Pushed to `origin/master` as `e7edcb1` on 2026-09-04 (rebased on the three July commits; kept their `typecheck` script and `.editorconfig`, kept the deletion of the dead receipt test). Deployed; owner recorded two test payments on the dummy school (Rs 4,500 and Rs 2,300, 2026-09-04 22:47/22:49 UTC): ledger credit and full allocation confirmed from the database.
 
 ## Batch C — one fee system (decision 2026-09-04: keep what the schools use; retire the April tables)
 
