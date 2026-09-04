@@ -60,19 +60,20 @@ export const CustomReceiptManager: React.FC<CustomReceiptManagerProps> = ({ scho
       setRecords(recRes.data || []);
       setParents(parentRes.data || []);
       
-      // Auto-generate next receipt number based on current date and count
-      const today = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
-      const count = (recRes.data?.length || 0) + 1;
-      setReceiptNo(`${type.charAt(0).toUpperCase()}-${today}-${String(count).padStart(3, '0')}`);
-
     } catch (err: any) {
       console.error('Error loading custom receipts:', err);
     } finally {
       setLoading(false);
     }
-  }, [schoolId, type]);
+  }, [schoolId]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Next receipt number: type letter + YYMM + running count. Derived in memory; no refetch on type toggle.
+  useEffect(() => {
+    const today = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
+    setReceiptNo(`${type.charAt(0).toUpperCase()}-${today}-${String(records.length + 1).padStart(3, '0')}`);
+  }, [type, records.length]);
 
   // Handle Item Changes
   const updateItem = (idx: number, field: string, value: any) => {

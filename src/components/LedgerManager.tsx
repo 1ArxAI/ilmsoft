@@ -1,5 +1,5 @@
 import { sanitizeSearchTerm } from '../lib/validation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/Button';
 import {
@@ -138,17 +138,20 @@ export const LedgerManager = ({
 
       setParents(finalData);
 
-      // Deep link auto-selection
-      if (initialParentId && !selectedParent) {
-        const target = formatted.find(p => p.id === initialParentId);
-        if (target) setSelectedParent(target);
-      }
     } catch (err: any) {
       showFlash('Error loading ledger data: ' + err.message);
     } finally {
       setLoading(false);
     }
-  }, [schoolId, debouncedSearch, showFlash, initialParentId, selectedParent, hideZeroBalance]);
+  }, [schoolId, debouncedSearch, showFlash, hideZeroBalance]);
+
+  // Deep link: select the requested parent once, when the list that contains it arrives.
+  const deepLinkedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialParentId || deepLinkedRef.current === initialParentId) return;
+    const target = parents.find(p => p.id === initialParentId);
+    if (target) { deepLinkedRef.current = initialParentId; setSelectedParent(target); }
+  }, [parents, initialParentId]);
 
   const loadLedger = async (parentId: string) => {
     setEntriesLoading(true);
@@ -170,7 +173,7 @@ export const LedgerManager = ({
 
   useEffect(() => {
     loadParents();
-  }, [loadParents, hideZeroBalance]);
+  }, [loadParents]);
 
   useEffect(() => {
     if (selectedParent) {

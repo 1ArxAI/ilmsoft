@@ -386,9 +386,10 @@ export const ParentsManager = ({
 
       {viewTarget ? (
         <ParentDetailView
-          key={`${viewTarget.id}-${refreshCount}`}
+          key={viewTarget.id}
           parent={viewTarget}
           schoolId={schoolId}
+          refreshKey={refreshCount}
           classes={classes}
           onBack={() => setViewTarget(null)}
           onAddChild={openAddChild}

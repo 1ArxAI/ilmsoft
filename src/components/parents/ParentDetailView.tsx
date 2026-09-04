@@ -11,6 +11,7 @@ import { useFlashMessage } from '../../hooks/useFlashMessage';
 interface ParentDetailViewProps {
   parent: Parent;
   schoolId: string;
+  refreshKey?: number;   // bump to reload after an edit or a new child, without remounting
   classes: Class[];
   onBack: () => void;
   onAddChild: (p: Parent) => void;
@@ -23,6 +24,7 @@ interface ParentDetailViewProps {
 export const ParentDetailView = ({
   parent,
   schoolId,
+  refreshKey,
   classes,
   onBack,
   onAddChild,
@@ -67,7 +69,7 @@ export const ParentDetailView = ({
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, refreshKey]);
 
   const [updatingParentStatus, setUpdatingParentStatus] = useState(false);
   const [updatingChildId, setUpdatingChildId] = useState<string | null>(null);

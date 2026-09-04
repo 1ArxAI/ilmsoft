@@ -1,5 +1,5 @@
 import { sanitizeSearchTerm } from '../lib/validation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { 
@@ -74,17 +74,20 @@ export const PaymentPortalV2 = ({
 
       setParents(formatted);
 
-      // Deep link auto-selection
-      if (initialParentId && !selectedParent) {
-        const target = formatted.find(p => p.id === initialParentId);
-        if (target) setSelectedParent(target);
-      }
     } catch (err: any) {
       showFlash('Error loading parents: ' + err.message);
     } finally {
       setLoading(false);
     }
-  }, [schoolId, debouncedSearch, showFlash, initialParentId, selectedParent]);
+  }, [schoolId, debouncedSearch, showFlash]);
+
+  // Deep link: select the requested parent once, when the list that contains it arrives.
+  const deepLinkedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialParentId || deepLinkedRef.current === initialParentId) return;
+    const target = parents.find(p => p.id === initialParentId);
+    if (target) { deepLinkedRef.current = initialParentId; setSelectedParent(target); }
+  }, [parents, initialParentId]);
 
   useEffect(() => {
     loadParents();
