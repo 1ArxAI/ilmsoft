@@ -17,7 +17,7 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
-    Content-Security-Policy = "default-src 'self' 'unsafe-inline' https://ntohwovclsoffwummuxj.supabase.co wss://ntohwovclsoffwummuxj.supabase.co https://*.supabase.co; img-src 'self' data: https://*.supabase.co; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;"
+    Content-Security-Policy = "default-src 'self' 'unsafe-inline' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https://*.supabase.co; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;"
 
 [[headers]]
   for = "/assets/*"
