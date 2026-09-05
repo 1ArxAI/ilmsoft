@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { Printer, X, Loader2, Search, Filter, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
@@ -166,6 +166,16 @@ export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month,
     window.print();
   };
 
+  const selectedClassName = useMemo(() => classList.find(c => c.id === selectedClass)?.name, [classList, selectedClass]);
+  const filteredInvoices = useMemo(() => invoices.filter(inv => {
+    const matchesSearch = inv.parentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         inv.contact.includes(searchTerm);
+    const matchesClass = selectedClass === 'all' || 
+                        inv.students.some(s => s.className === selectedClassName);
+    
+    return matchesSearch && matchesClass;
+  }), [invoices, searchTerm, selectedClass, selectedClassName]);
+
   if (loading) return (
     <div className="invoice-print-overlay">
       <div className="dash-loading"><Loader2 className="spin" /> Preparing Invoices...</div>
@@ -177,14 +187,6 @@ export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month,
   const dueDate = `9th ${monthName}`;
 
   // Filtering Logic
-  const filteredInvoices = invoices.filter(inv => {
-    const matchesSearch = inv.parentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         inv.contact.includes(searchTerm);
-    const matchesClass = selectedClass === 'all' || 
-                        inv.students.some(s => s.className === classList.find(c => c.id === selectedClass)?.name);
-    
-    return matchesSearch && matchesClass;
-  });
 
   const totalBatches = Math.ceil(filteredInvoices.length / batchSize);
   const displayedInvoices = filteredInvoices.slice(

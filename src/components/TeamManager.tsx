@@ -34,7 +34,7 @@ export const TeamManager = ({ schoolId }: { schoolId: string }) => {
     try {
       const { data, error } = await supabase
         .from('school_members')
-        .select('*')
+        .select('id, school_id, user_id, email, role, status, invite_token, created_at, updated_at')
         .eq('school_id', schoolId)
         .in('status', ['active', 'pending'])
         .order('role', { ascending: true })

@@ -32,7 +32,7 @@ export const CustomReceiptManager: React.FC<CustomReceiptManagerProps> = ({ scho
   const [receiptNo, setReceiptNo] = useState('');
 
   // Helpers
-  const [parents, setParents] = useState<Parent[]>([]);
+  const [parents, setParents] = useState<Pick<Parent, 'id' | 'first_name' | 'last_name' | 'cnic'>[]>([]);
   const [printId, setPrintId] = useState<string | null>(null);
   const [view, setView] = useState<'history' | 'create'>('history');
 
@@ -52,12 +52,12 @@ export const CustomReceiptManager: React.FC<CustomReceiptManagerProps> = ({ scho
     setLoading(true);
     try {
       const [recRes, parentRes] = await Promise.all([
-        supabase.from('custom_receipts').select('id, school_id, type, receipt_no, recipient_name, parent_id, date, due_date, items, total_amount, notes, created_at').eq('school_id', schoolId).order('created_at', { ascending: false }),
-        supabase.from('parents').select('id, school_id, first_name, last_name, relation, gender, cnic, contact, whatsapp, email, address, occupation, notes, is_active, opening_balance, created_at, updated_at').eq('school_id', schoolId).order('first_name')
+        supabase.from('custom_receipts').select('id, school_id, type, receipt_no, recipient_name, parent_id, date, due_date, total_amount, notes, created_at').eq('school_id', schoolId).order('created_at', { ascending: false }),
+        supabase.from('parents').select('id, first_name, last_name, cnic').eq('school_id', schoolId).eq('is_active', true).order('first_name')
       ]);
 
       if (recRes.error) throw recRes.error;
-      setRecords(recRes.data || []);
+      setRecords((recRes.data || []) as unknown as CustomReceipt[]);   // list needs no items; the printer loads them
       setParents(parentRes.data || []);
       
     } catch (err: any) {

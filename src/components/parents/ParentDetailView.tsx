@@ -53,7 +53,7 @@ export const ParentDetailView = ({
         supabase.from('parent_balances').select('balance').eq('parent_id', parent.id).maybeSingle(),
         supabase.from('payments').select('id, received_amount, payment_method, received_at, notes').eq('parent_id', parent.id).order('received_at', { ascending: false }).limit(5),
         supabase.from('ledger').select('id, entry_type, amount, reference_type, description, month, created_at').eq('parent_id', parent.id).order('created_at', { ascending: false }).limit(10),
-        supabase.from('students').select('*').eq('parent_id', parent.id)
+        supabase.from('students').select('id, first_name, last_name, gender, registration_number, date_of_admission, current_class_id, active, monthly_fee, current_monthly_fee, discount_type, discount_value').eq('parent_id', parent.id)
       ]);
 
       setBalance(balRes.data?.balance || 0);

@@ -253,14 +253,17 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
     });
   };
 
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const filteredExpenses = expenses.filter(e => {
-    const matchesSearch = e.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         e.paid_by.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         e.category_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !filterCategory || e.category_id === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredExpenses = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return expenses.filter(e => {
+      const matchesSearch = e.description.toLowerCase().includes(q) ||
+                           e.paid_by.toLowerCase().includes(q) ||
+                           e.category_name?.toLowerCase().includes(q);
+      const matchesCategory = !filterCategory || e.category_id === filterCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [expenses, searchTerm, filterCategory]);
+  const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses]);
 
   const totalPages = Math.ceil(filteredExpenses.length / PAGE_SIZE);
   

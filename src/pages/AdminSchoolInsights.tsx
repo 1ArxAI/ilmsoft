@@ -49,7 +49,7 @@ export const AdminSchoolInsights = () => {
     if (!id) return;
     setLoading(true);
     try {
-      const { data: schoolData, error: schoolError } = await supabase.from('schools').select('*').eq('id', id).single();
+      const { data: schoolData, error: schoolError } = await supabase.from('schools').select('id, school_name, contact, email, address, logo_url, total_credits, credit_expires_at, created_at').eq('id', id).single();
       if (schoolError) throw schoolError;
       setSchool(schoolData);
 

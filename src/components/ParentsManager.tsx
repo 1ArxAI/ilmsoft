@@ -73,7 +73,7 @@ export const ParentsManager = ({
         if (!target && records.length > 0) {
           const { data, error } = await supabase
             .from('parents')
-            .select('*')
+            .select('id, school_id, first_name, last_name, cnic, contact, address, notes, is_active, opening_balance, created_at, updated_at')
             .eq('id', initialViewParentId)
             .maybeSingle();
           if (data && !error) {
