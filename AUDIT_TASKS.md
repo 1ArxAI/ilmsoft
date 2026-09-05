@@ -94,3 +94,10 @@ PostgREST returns at most 1,000 rows per request; an unbounded `select` silently
 
 
 **Cleanup 2026-09-05.** Removed the one-shot `scripts/batch_*_apply.mjs` harnesses, `sql/rollback/*` snapshots, pre-audit ad-hoc SQL, `scratch/`, `performance_report.md`, and the local `archives/` folder; all remain in git history before commit "chore: remove applied harnesses...". Local dumps pruned to the newest 3 (mirrors the Baserow policy).
+
+## Batch I — second speed report (2026-09-05, verified before acting)
+
+- [x] **I1.** Admin pages code-split (`App.tsx` lazy + Suspense). Measured entry 98.6 → 93.2 KB gz. The report's "189 KB Lucide chunk" is actually supabase-js + swr (shared vendor code, needed at boot); icons are in per-tab chunks. Its "78% smaller" claim was wrong.
+- [x] **I2.** Income + Expense on SWR (`['income'|'expenses', schoolId]`, `mutate()` after writes). Verified on Mumbai: first open 2 calls, return 0 calls and no spinner; add + delete on the dummy school refetch correctly.
+- [x] **I3.** Four printers read school name/logo/colours from `useAuth().profile` instead of querying `schools`. Only CustomReceiptPrinter ran that query sequentially (real round trip saved); the other three were parallel (one request saved, ~0 ms). Verified in browser: PaymentReceipt and InvoicePrinter (Fee Stats → Print). ResultCardPrinter and CustomReceiptPrinter not exercised (dummy school has no exam term / bills); same code shape, typecheck clean.
+- [ ] **Deferred:** Fee Stats aggregate RPC (4 small parallel queries, SWR-cached, few KB — revisit when rows grow); index on `exam_term_configs(class_id)` (9 rows, useless); hover prefetch (phones); Netlify `ENABLE_CACHE` (disabled deliberately in April by another agent; deploy time only; UNVERIFIED that Netlify honours it).
