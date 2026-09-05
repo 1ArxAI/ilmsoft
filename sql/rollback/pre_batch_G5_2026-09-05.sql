@@ -1,4 +1,4 @@
--- ROLLBACK SNAPSHOT Batch G5 2026-09-05T00:01:17.318Z
+-- ROLLBACK SNAPSHOT Batch G5 2026-09-05T00:14:38.196Z
 DROP VIEW IF EXISTS public.class_student_counts;
 DROP FUNCTION IF EXISTS public.school_financial_totals(uuid);
 DROP FUNCTION IF EXISTS public.missing_fee_parents(uuid,text);
