@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { useFlashMessage } from '../hooks/useFlashMessage';
@@ -30,16 +30,16 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
     setLoading(true);
     try {
       if (subTab === 'parents') {
-        const { data, error } = await supabase
+        const { data, error } = await fetchAll((from, to) => supabase
           .from('parents')
           .select('id, first_name, last_name, cnic, contact, address, is_active')
           .eq('school_id', schoolId)
           .eq('is_active', false)
-          .order('first_name');
+          .order('first_name').order('id').range(from, to));
         if (error) throw error;
         setParents(data || []);
       } else {
-        const { data, error } = await supabase
+        const { data, error } = await fetchAll((from, to) => supabase
           .from('students')
           .select(`
             id, first_name, last_name, cnic, active, parent_id,
@@ -48,7 +48,7 @@ export const ArchiveManager = ({ schoolId, role, onAction }: ArchiveManagerProps
           `)
           .eq('school_id', schoolId)
           .eq('active', false)
-          .order('first_name');
+          .order('first_name').order('id').range(from, to));
         if (error) throw error;
         setStudents(data || []);
       }

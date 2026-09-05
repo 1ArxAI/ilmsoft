@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { Button } from './ui/Button';
@@ -93,11 +93,12 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
   }, [schoolId, showFlash]);
 
   const loadRecords = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data, error } = await fetchAll((from, to) => supabase
       .from('income_records')
       .select(`id, school_id, category_id, amount, date, payment_method, description, additional_notes, created_at, category:category_id(name)`)
       .eq('school_id', schoolId)
-      .order('date', { ascending: false });
+      .order('date', { ascending: false }).order('id')
+      .range(from, to));
 
     if (error) {
       showFlash('Error loading records: ' + error.message);

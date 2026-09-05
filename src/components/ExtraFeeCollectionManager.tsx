@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import type { Role, ExtraFee, Class, ExtraFeePayment } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { useAuth } from '../contexts/AuthContext';
@@ -68,17 +68,17 @@ export const ExtraFeeCollectionManager = ({ schoolId, role }: { schoolId: string
       setDataLoading(true);
       try {
         const [{ data: stdData, error: stdErr }, { data: payData, error: payErr }] = await Promise.all([
-          supabase
+          fetchAll((from, to) => supabase
             .from('students')
             .select('id, parent_id, first_name, last_name, parents:parent_id(id, first_name, last_name, contact, whatsapp)')
             .eq('school_id', schoolId)
             .eq('admission_class_id', selectedClassId)
-            .eq('active', true),
-          supabase
+            .eq('active', true).order('first_name').order('id').range(from, to)),
+          fetchAll((from, to) => supabase
             .from('extra_fee_payments')
             .select('id, school_id, extra_fee_id, student_id, parent_id, amount_paid, payment_method, payment_date, created_at')
             .eq('school_id', schoolId)
-            .eq('extra_fee_id', selectedFeeId),
+            .eq('extra_fee_id', selectedFeeId).order('id').range(from, to)),
         ]);
         if (stdErr) throw stdErr;
         if (payErr) throw payErr;

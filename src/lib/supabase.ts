@@ -9,6 +9,24 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+/**
+ * PostgREST returns at most 1,000 rows per request (Supabase "Max rows"). Lists that can grow past that
+ * must page. `build(from, to)` returns a fresh query with `.range(from, to)` applied; pages are fetched
+ * until one comes back short. Ordering in the query is required for stable pages.
+ */
+export const PAGE_ROWS = 1000;
+export async function fetchAll<T>(
+  build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<{ data: T[]; error: { message: string } | null }> {
+  const all: T[] = [];
+  for (let from = 0; ; from += PAGE_ROWS) {
+    const { data, error } = await build(from, from + PAGE_ROWS - 1);
+    if (error) return { data: all, error };
+    all.push(...(data || []));
+    if (!data || data.length < PAGE_ROWS) return { data: all, error: null };
+  }
+}
+
 export type Role = 'owner' | 'manager';
 
 export type SchoolProfile = {

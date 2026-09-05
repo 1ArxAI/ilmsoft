@@ -1,6 +1,6 @@
 import { sanitizeSearchTerm } from '../lib/validation';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { 
     Search, CreditCard, CheckCircle, AlertCircle, 
@@ -45,7 +45,7 @@ export const PaymentPortalV2 = ({
     setLoading(true);
     try {
       const term = sanitizeSearchTerm(debouncedSearch);
-      const { data, error } = await supabase
+      const { data, error } = await fetchAll((from, to) => supabase
         .from('parents')
         .select(`
           id, first_name, last_name, contact,
@@ -53,11 +53,12 @@ export const PaymentPortalV2 = ({
         `)
         .eq('school_id', schoolId)
         .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,contact.ilike.%${term}%`)
-        .order('first_name');
+        .order('first_name').order('id')
+        .range(from, to));
 
       if (error) throw error;
 
-      const formatted = data.map(p => ({
+      const formatted = data.map((p: any) => ({
         id: p.id,
         first_name: p.first_name,
         last_name: p.last_name,

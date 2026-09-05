@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import {
@@ -41,8 +41,8 @@ export const TeachersManager = ({ schoolId, role }: { schoolId: string; role?: R
   const load = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('teachers').select('id, school_id, name, type, cnic, gender, personal_contact, home_contact, address, education, salary, notes')
-        .eq('school_id', schoolId).eq('is_active', true).order('type').order('name');
+      const { data, error } = await fetchAll((from, to) => supabase.from('teachers').select('id, school_id, name, type, cnic, gender, personal_contact, home_contact, address, education, salary, notes')
+        .eq('school_id', schoolId).eq('is_active', true).order('type').order('name').order('id').range(from, to));
       if (error) throw error;
       setRecords(data || []);
     } catch (err: any) {

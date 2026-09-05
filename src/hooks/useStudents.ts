@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import useSWR from 'swr';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 
 export type Student = {
   id: string;
@@ -43,9 +43,9 @@ export const fetchSchoolData = async (schoolId: string) => {
     { data: cData, error: cErr },
     { data: pData, error: pErr },
   ] = await Promise.all([
-    supabase.from('students').select('id, school_id, first_name, last_name, gender, cnic, date_of_birth, date_of_admission, admission_class_id, current_class_id, monthly_fee, current_monthly_fee, discount_type, discount_value, active, parent_id').eq('school_id', schoolId).order('first_name'),
+    fetchAll((from, to) => supabase.from('students').select('id, school_id, first_name, last_name, gender, cnic, date_of_birth, date_of_admission, admission_class_id, current_class_id, monthly_fee, current_monthly_fee, discount_type, discount_value, active, parent_id').eq('school_id', schoolId).order('first_name').order('id').range(from, to)),
     supabase.from('classes').select('id, name, monthly_fee, active').eq('school_id', schoolId).eq('active', true).order('name'),
-    supabase.from('parents').select('id, first_name, last_name, cnic, contact, address, notes, is_active, created_at, updated_at').eq('school_id', schoolId).eq('is_active', true).order('first_name'),
+    fetchAll((from, to) => supabase.from('parents').select('id, first_name, last_name, cnic, contact, address, notes, is_active, created_at, updated_at').eq('school_id', schoolId).eq('is_active', true).order('first_name').order('id').range(from, to)),
   ]);
 
   if (sErr) throw sErr;

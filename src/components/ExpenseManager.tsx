@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { Button } from './ui/Button';
@@ -87,11 +87,12 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
 
   const loadExpenses = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await fetchAll((from, to) => supabase
         .from('expenses')
         .select(`id, school_id, category_id, amount, expense_date, payment_method, description, paid_by, additional_notes, created_at, categories:category_id (name)`)
         .eq('school_id', schoolId)
-        .order('expense_date', { ascending: false });
+        .order('expense_date', { ascending: false }).order('id')
+        .range(from, to));
       
       if (error) {
         showFlash('Error loading expenses: ' + error.message);

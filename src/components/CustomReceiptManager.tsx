@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase, type CustomReceipt, type Parent } from '../lib/supabase';
+import { supabase, fetchAll, type CustomReceipt, type Parent } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { 
@@ -52,8 +52,8 @@ export const CustomReceiptManager: React.FC<CustomReceiptManagerProps> = ({ scho
     setLoading(true);
     try {
       const [recRes, parentRes] = await Promise.all([
-        supabase.from('custom_receipts').select('id, school_id, type, receipt_no, recipient_name, parent_id, date, due_date, total_amount, notes, created_at').eq('school_id', schoolId).order('created_at', { ascending: false }),
-        supabase.from('parents').select('id, first_name, last_name, cnic').eq('school_id', schoolId).eq('is_active', true).order('first_name')
+        fetchAll((from, to) => supabase.from('custom_receipts').select('id, school_id, type, receipt_no, recipient_name, parent_id, date, due_date, total_amount, notes, created_at').eq('school_id', schoolId).order('created_at', { ascending: false }).order('id').range(from, to)),
+        fetchAll((from, to) => supabase.from('parents').select('id, first_name, last_name, cnic').eq('school_id', schoolId).eq('is_active', true).order('first_name').order('id').range(from, to))
       ]);
 
       if (recRes.error) throw recRes.error;

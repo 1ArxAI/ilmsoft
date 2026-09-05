@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import useSWR from 'swr';
-import { supabase } from '../../lib/supabase';
+import { supabase, fetchAll } from '../../lib/supabase';
 import type { Supplier, SupplierTransaction } from './types';
 
 export const useSuppliers = (schoolId: string) => {
@@ -21,12 +21,13 @@ export const useSuppliers = (schoolId: string) => {
   const loadSuppliers = useCallback(async () => { await mutate(); }, [mutate]);
 
   const loadTransactions = useCallback(async (supplierId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await fetchAll((from, to) => supabase
       .from('supplier_transactions')
       .select('id, school_id, supplier_id, type, amount, date, description, notes, payment_method, bill_number, balance_after, created_at')
       .eq('supplier_id', supplierId)
       .eq('school_id', schoolId)
-      .order('date', { ascending: false });
+      .order('date', { ascending: false }).order('id')
+      .range(from, to));
     
     if (error) console.error('Error loading transactions:', error);
     setTransactions(data || []);

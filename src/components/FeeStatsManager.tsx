@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import useSWR from 'swr';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import {
   TrendingUp, Calendar, Clock, Search, Users, AlertCircle, X,
 } from 'lucide-react';
@@ -201,19 +201,19 @@ export const FeeStatsManager = ({
     {
       const [feesRes, ledgerRes, classesRes, balancesRes] = await Promise.all([
         // 1. Current Month Generated Fees
-        supabase
+        fetchAll((from, to) => supabase
           .from('student_monthly_fees')
           .select('net_amount, class_id, parent_id')
           .eq('school_id', schoolId)
-          .eq('month', cm),
+          .eq('month', cm).order('id').range(from, to)),
         
         // 2. All Ledger Payments (this month and today)
-        supabase
+        fetchAll((from, to) => supabase
           .from('ledger')
           .select('parent_id, amount, created_at, month')
           .eq('school_id', schoolId)
           .eq('reference_type', 'payment')
-          .or(`month.eq.${cm},created_at.gte.${cm}-01T00:00:00`),
+          .or(`month.eq.${cm},created_at.gte.${cm}-01T00:00:00`).order('id').range(from, to)),
 
         // 3. Classes info for labeling
         supabase
@@ -222,7 +222,7 @@ export const FeeStatsManager = ({
           .eq('school_id', schoolId),
         
         // 4. Current Parent Balances (Dues)
-        supabase
+        fetchAll((from, to) => supabase
           .from('parent_balances')
           .select(`
             parent_id,
@@ -231,7 +231,7 @@ export const FeeStatsManager = ({
           `)
           .eq('school_id', schoolId)
           .lt('balance', 0)
-          .eq('parents.is_active', true)
+          .eq('parents.is_active', true).order('parent_id').range(from, to))
       ]);
 
       const monthlyFees = feesRes.data || [];

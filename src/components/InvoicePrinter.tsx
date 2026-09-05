@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, fetchAll } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { Printer, X, Loader2, Search, Filter, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import './InvoicePrinter.css';
@@ -83,9 +83,9 @@ export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month,
       const [schoolRes, classRes, parentRes, feeRes, studentRes] = await Promise.all([
         supabase.from('schools').select('school_name, logo_url').eq('id', schoolId).single(),
         supabase.from('classes').select('id, name').eq('school_id', schoolId).order('name'),
-        parentQuery,
-        feeQuery,
-        studentQuery,
+        fetchAll((from, to) => parentQuery.order('id').range(from, to)),
+        fetchAll((from, to) => feeQuery.order('id').range(from, to)),
+        fetchAll((from, to) => studentQuery.order('id').range(from, to)),
       ]);
 
       if (schoolRes.data) { setSchoolName(schoolRes.data.school_name); setLogo(schoolRes.data.logo_url); }
