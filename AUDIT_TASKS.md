@@ -53,7 +53,7 @@ Migration: `sql/batch_C_one_fee_system.sql`. Rollback: `sql/rollback/pre_batch_C
 
 ## Batch E — hygiene
 
-- [x] Scheduled backup, two independent paths (2026-09-05): (1) GitHub Actions `nightly_backup.yml` at 03:00 PKT dumps the live DB and stores the zip in Baserow table `ilmsoft backups` (db 546844, table 1178412; keeps 30) — proven by a manual run (row 7, 30 tables, 1930 rows); (2) launchd on this Mac at 03:00 does the same when the Mac is awake and keeps 14 local folders. Secrets live in the repo's `supabase connect` environment.
+- [x] Scheduled backup, two independent paths (2026-09-05): (1) GitHub Actions `nightly_backup.yml` at 03:00 PKT dumps the live DB and stores the zip in Baserow table `ilmsoft backups` (db 546844, table 1178412; keeps the newest 3, pruning verified) — proven by a manual run. Owner chose no schedule on the Mac (launchd agent removed 2026-09-05); local `backups/` folders are only the manual pre-change dumps. Secrets live in the repo's `supabase connect` environment.
 - [x] ErrorBoundary no longer turns unhandled rejections (MetaMask etc.) into a fatal screen (`a92166e`).
 - [x] Extra-fee collection no longer writes ledger rows (they used a reference type the ledger rejects, so none were ever written; extra fees live in `extra_fee_payments`).
 - [x] CSP without `unsafe-eval`.

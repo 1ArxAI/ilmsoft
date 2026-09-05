@@ -1,6 +1,6 @@
 // Zip the newest backups/<stamp>/ folder and store it as a row + file in a Baserow table.
 // Env: BASEROW_TOKEN, BASEROW_TABLE_ID (table with fields: Name (text), Taken at (text), Tables (number),
-//      Rows (number), Note (long text), File (file)). Keeps the newest KEEP rows (default 30).
+//      Rows (number), Note (long text), File (file)). Keeps the newest KEEP rows (default 3).
 // Usage: node scripts/backup_to_baserow.mjs [backups/<stamp>]
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,7 +11,7 @@ const envFile = fs.existsSync('.env.local')
   : {};
 const TOKEN = process.env.BASEROW_TOKEN || envFile.BASEROW_TOKEN;
 const TABLE = process.env.BASEROW_TABLE_ID || envFile.BASEROW_TABLE_ID;
-const KEEP = Number(process.env.BASEROW_KEEP || 30);
+const KEEP = Number(process.env.BASEROW_KEEP || 3);
 const API = 'https://api.baserow.io/api';
 if (!TOKEN || !TABLE) { console.error('Missing BASEROW_TOKEN or BASEROW_TABLE_ID'); process.exit(2); }
 
@@ -52,10 +52,12 @@ console.log(`Baserow: row ${row.id} created, file ${Math.round(size / 1024)} KB,
 fs.unlinkSync(zipPath);
 
 // 3. prune: keep the newest KEEP rows (by id)
-r = await fetch(`${API}/database/rows/table/${TABLE}/?user_field_names=true&size=200&order_by=-id`, { headers: auth });
-if (r.ok) {
-  const list = await r.json();
-  const old = (list.results || []).slice(KEEP);
-  for (const o of old) { await fetch(`${API}/database/rows/table/${TABLE}/${o.id}/`, { method: 'DELETE', headers: auth }); }
-  if (old.length) console.log(`Baserow: pruned ${old.length} old backup row(s)`);
+r = await fetch(`${API}/database/rows/table/${TABLE}/?user_field_names=true&size=200`, { headers: auth });
+if (!r.ok) await fail(r, 'list rows for pruning');
+const list = await r.json();
+const old = (list.results || []).sort((a, b) => b.id - a.id).slice(KEEP);
+for (const o of old) {
+  const d = await fetch(`${API}/database/rows/table/${TABLE}/${o.id}/`, { method: 'DELETE', headers: auth });
+  if (!d.ok) await fail(d, `delete row ${o.id}`);
 }
+console.log(`Baserow: ${old.length} old row(s) pruned, ${Math.min(KEEP, (list.results || []).length)} kept`);
