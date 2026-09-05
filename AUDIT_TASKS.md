@@ -92,3 +92,5 @@ PostgREST returns at most 1,000 rows per request; an unbounded `select` silently
 - [x] **H1.** `fetchAll(build)` in `src/lib/supabase.ts` pages by 1,000 with `.range()` (unit-tested: 2,500 rows, exact multiples, error mid-way). Applied to every list that can grow: students + parents (useStudents), income records, expenses, custom receipts, supplier transactions, Ledger parent list, Receive Payment parent list, Fee Stats fee rows / this-month payments / owing balances, archive lists, teachers, invoice printer rows, extra-fee students + payments. Every paged query carries a deterministic `order(...).order('id')`.
 - [ ] **H2.** Optional belt-and-braces: raise "Max rows" in Supabase → Project Settings → API on the Mumbai project (e.g. 5,000). Not required with paging.
 
+
+**Cleanup 2026-09-05.** Removed the one-shot `scripts/batch_*_apply.mjs` harnesses, `sql/rollback/*` snapshots, pre-audit ad-hoc SQL, `scratch/`, `performance_report.md`, and the local `archives/` folder; all remain in git history before commit "chore: remove applied harnesses...". Local dumps pruned to the newest 3 (mirrors the Baserow policy).
