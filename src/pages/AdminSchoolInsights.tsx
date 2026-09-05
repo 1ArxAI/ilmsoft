@@ -62,9 +62,7 @@ export const AdminSchoolInsights = () => {
         { count: newStudents },
         { count: classesCount },
         { count: teachersCount },
-        { data: paymentsData },
-        { data: monthlyFeesData },
-        { data: balancesData },
+        { data: totalsData },
         { data: recentPayments }
       ] = await Promise.all([
         supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', id),
@@ -72,15 +70,14 @@ export const AdminSchoolInsights = () => {
         supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', id).gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('classes').select('*', { count: 'exact', head: true }).eq('school_id', id).eq('active', true),
         supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('school_id', id).eq('is_active', true),
-        supabase.from('payments').select('received_amount').eq('school_id', id),
-        supabase.from('student_monthly_fees').select('net_amount').eq('school_id', id),
-        supabase.from('parent_balances').select('balance').eq('school_id', id),
+        supabase.rpc('school_financial_totals', { p_school_id: id }).maybeSingle(),
         supabase.from('payments').select('id, received_amount, received_at, parents:parent_id(first_name, last_name)').eq('school_id', id).order('received_at', { ascending: false }).limit(8)
       ]);
 
-      const totalCollection = (paymentsData || []).reduce((sum, p) => sum + (p.received_amount || 0), 0);
-      const totalExpected = (monthlyFeesData || []).reduce((sum, f) => sum + (f.net_amount || 0), 0);
-      const totalOutstanding = (balancesData || []).filter(b => (b.balance || 0) < 0).reduce((sum, b) => sum + Math.abs(b.balance || 0), 0);
+      const t = (totalsData || {}) as { total_collection?: number; total_expected?: number; total_outstanding?: number };
+      const totalCollection = Number(t.total_collection) || 0;
+      const totalExpected = Number(t.total_expected) || 0;
+      const totalOutstanding = Number(t.total_outstanding) || 0;
       const collectionRate = totalExpected > 0 ? (totalCollection / totalExpected) * 100 : 0;
 
       setStats({

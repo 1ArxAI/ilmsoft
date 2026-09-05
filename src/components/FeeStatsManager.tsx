@@ -210,9 +210,10 @@ export const FeeStatsManager = ({
         // 2. All Ledger Payments (this month and today)
         supabase
           .from('ledger')
-          .select('parent_id, amount, reference_type, created_at, month')
+          .select('parent_id, amount, created_at, month')
           .eq('school_id', schoolId)
-          .eq('reference_type', 'payment'),
+          .eq('reference_type', 'payment')
+          .or(`month.eq.${cm},created_at.gte.${cm}-01T00:00:00`),
 
         // 3. Classes info for labeling
         supabase
@@ -226,9 +227,11 @@ export const FeeStatsManager = ({
           .select(`
             parent_id,
             balance,
-            parents:parent_id(first_name, last_name, contact, is_active)
+            parents:parent_id!inner(first_name, last_name, contact, is_active)
           `)
           .eq('school_id', schoolId)
+          .lt('balance', 0)
+          .eq('parents.is_active', true)
       ]);
 
       const monthlyFees = feesRes.data || [];

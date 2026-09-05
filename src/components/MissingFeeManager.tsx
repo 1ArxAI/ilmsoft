@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { 
@@ -26,11 +26,10 @@ interface ParentWithStudents {
 
 export const MissingFeeManager = ({ schoolId }: { schoolId: string }) => {
   const { flash, showFlash } = useFlashMessage();
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [search, setSearch] = useState('');
   
-  const [activeParents, setActiveParents] = useState<ParentWithStudents[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [missingParents, setMissingParents] = useState<ParentWithStudents[]>([]);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
@@ -53,66 +52,25 @@ export const MissingFeeManager = ({ schoolId }: { schoolId: string }) => {
     return months;
   }, []);
 
-  const loadBaseData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Fetch parents who have active students
-      const { data, error } = await supabase
-        .from('parents')
-        .select(`
-          id, first_name, last_name, contact,
-          students!inner ( 
-            id, active, first_name, last_name, current_monthly_fee,
-            discount_type, discount_value,
-            classes!current_class_id ( name, monthly_fee )
-          )
-        `)
-        .eq('school_id', schoolId)
-        .eq('is_active', true)
-        .eq('students.active', true);
-        
-      if (error) throw error;
-      setActiveParents(data as any || []);
-    } catch (err: any) {
-      showFlash('Error loading parents: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [schoolId, showFlash]);
-
+  // One round trip: the parents (with their active students) who have no fee for the month.
   useEffect(() => {
-    loadBaseData();
-  }, [loadBaseData]);
-
-  useEffect(() => {
-    const calculateMissing = async () => {
-      if (!selectedMonth || activeParents.length === 0) {
-        setMissingParents([]);
-        return;
-      }
+    if (!selectedMonth) { setMissingParents([]); return; }
+    let cancelled = false;
+    const run = async () => {
       setFetching(true);
       try {
-        const { data: ledgerData, error } = await supabase
-          .from('ledger')
-          .select('parent_id')
-          .eq('school_id', schoolId)
-          .in('reference_type', ['monthly_fee', 'fee_generation'])
-          .eq('month', selectedMonth);
-
+        const { data, error } = await supabase.rpc('missing_fee_parents', { p_school_id: schoolId, p_month: selectedMonth });
         if (error) throw error;
-
-        const generatedParentIds = new Set(ledgerData?.map(l => l.parent_id) || []);
-        const missing = activeParents.filter(p => !generatedParentIds.has(p.id));
-        setMissingParents(missing);
+        if (!cancelled) setMissingParents((data as any) || []);
       } catch (err: any) {
-        showFlash('Error checking logs: ' + err.message);
+        showFlash('Error checking missing fees: ' + err.message);
       } finally {
-        setFetching(false);
+        if (!cancelled) setFetching(false);
       }
     };
-
-    calculateMissing();
-  }, [selectedMonth, activeParents, schoolId, showFlash]);
+    run();
+    return () => { cancelled = true; };
+  }, [selectedMonth, schoolId, showFlash]);
 
   const handleGenerateIndividual = async (parent: ParentWithStudents) => {
     if (!selectedMonth) return;
@@ -143,17 +101,15 @@ export const MissingFeeManager = ({ schoolId }: { schoolId: string }) => {
     setGeneratingAll(true);
     let successCount = 0;
     try {
-      for (const parent of missingParents) {
-        const { error } = await supabase.rpc('generate_individual_fee', {
-           p_school_id: schoolId,
-           p_parent_id: parent.id,
-           p_month: selectedMonth
-        });
-        if (!error) successCount++;
-      }
+      const { data, error } = await supabase.rpc('generate_fees_for_parents', {
+        p_school_id: schoolId,
+        p_parent_ids: missingParents.map(p => p.id),
+        p_month: selectedMonth
+      });
+      if (error) throw error;
+      successCount = (data as any)?.processed ?? 0;
       showFlash(`Successfully processed ${successCount} missing fee accounts!`);
-      // Reload active data to clear the board accurately
-      setMissingParents([]);
+      setMissingParents(prev => prev.filter(() => false));
     } catch(err: any) {
       showFlash('Bulk process interruption: ' + err.message);
     } finally {

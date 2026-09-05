@@ -97,14 +97,16 @@ export const AdminDashboard = () => {
   };
 
   const loadStats = async () => {
-    const { data: sc }  = await supabase.from('schools').select('total_credits,credit_expires_at');
-    const { data: pend } = await supabase.from('credit_requests').select('id').eq('status', 'pending');
-    const { data: appr } = await supabase.from('credit_requests').select('amount_pkr').eq('status', 'approved');
+    const [{ data: sc }, { count: pending }, { data: appr }] = await Promise.all([
+      supabase.from('schools').select('total_credits,credit_expires_at'),
+      supabase.from('credit_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('credit_requests').select('amount_pkr').eq('status', 'approved'),
+    ]);
     const now = new Date();
     const active = (sc || []).filter(s => s.total_credits > 0 && (!s.credit_expires_at || new Date(s.credit_expires_at) > now)).length;
     setStats({
       totalSchools: sc?.length || 0,
-      pendingRequests: pend?.length || 0,
+      pendingRequests: pending || 0,
       totalRevenue: (appr || []).reduce((sum, r) => sum + r.amount_pkr, 0),
       activeSchools: active,
     });

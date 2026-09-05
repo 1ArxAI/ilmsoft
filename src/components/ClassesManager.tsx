@@ -58,22 +58,16 @@ export const ClassesManager = ({ schoolId, role }: { schoolId: string; role?: Ro
           .eq('school_id', schoolId)
           .order('display_order', { ascending: true })
           .order('name'),
-        supabase.from('students').select('admission_class_id')
+        supabase.from('class_student_counts').select('class_id, active_students')
           .eq('school_id', schoolId)
-          .eq('active', true)
       ]);
       
       if (classRes.error) throw classRes.error;
       if (studentRes.error) throw studentRes.error;
       
       setClasses(classRes.data || []);
-      // Count students per class
       const counts: Record<string, number> = {};
-      (studentRes.data || []).forEach(s => {
-        if (s.admission_class_id) {
-          counts[s.admission_class_id] = (counts[s.admission_class_id] || 0) + 1;
-        }
-      });
+      (studentRes.data || []).forEach((r: any) => { counts[r.class_id] = Number(r.active_students) || 0; });
       setStudentCounts(counts);
     } catch (err: any) {
       showFlash('Error loading classes: ' + err.message);

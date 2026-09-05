@@ -10,33 +10,14 @@ export const useSuppliers = (schoolId: string) => {
   const loadSuppliers = useCallback(async () => {
     setLoading(true);
     
-    const [{ data: suppliersData, error: suppliersError }, { data: txData, error: txError }] = await Promise.all([
-      supabase
-        .from('suppliers')
-        .select('id, school_id, supplier_name, business_name, contact_number, address, opening_balance, current_balance, notes, created_at')
-        .eq('school_id', schoolId)
-        .order('supplier_name'),
-      supabase
-        .from('supplier_transactions')
-        .select('supplier_id, type, amount')
-        .eq('school_id', schoolId),
-    ]);
+    const { data: suppliersData, error: suppliersError } = await supabase
+      .from('suppliers')
+      .select('id, school_id, supplier_name, business_name, contact_number, address, opening_balance, current_balance, notes, created_at')
+      .eq('school_id', schoolId)
+      .order('supplier_name');
     if (suppliersError) console.error('Error loading suppliers:', suppliersError);
-    if (txError) console.error('Error loading transaction totals:', txError);
-
-    // Compute balances: Opening + Sum(Bills) - Sum(Payments)
-    const processedSuppliers = (suppliersData || []).map(s => {
-      const supplierTxs = (txData || []).filter(tx => tx.supplier_id === s.id);
-      const totalBills = supplierTxs.filter(tx => tx.type === 'bill').reduce((acc, tx) => acc + (tx.amount || 0), 0);
-      const totalPayments = supplierTxs.filter(tx => tx.type === 'payment').reduce((acc, tx) => acc + (tx.amount || 0), 0);
-      
-      return {
-        ...s,
-        current_balance: (s.opening_balance || 0) + totalBills - totalPayments
-      };
-    });
-
-    setSuppliers(processedSuppliers);
+    // current_balance is maintained by a database trigger on supplier_transactions.
+    setSuppliers(suppliersData || []);
     setLoading(false);
   }, [schoolId]);
 
@@ -76,16 +57,6 @@ export const useSuppliers = (schoolId: string) => {
     const amount = parseInt(paymentData.amount);
     const newBalance = supplier.current_balance - amount;
 
-    // Update supplier balance
-    const { error: supplierUpdateError } = await supabase
-      .from('suppliers')
-      .update({ 
-        current_balance: newBalance
-      })
-      .eq('id', supplier.id);
-
-    if (supplierUpdateError) throw supplierUpdateError;
-
     // Insert transaction
     const { error: txError } = await supabase.from('supplier_transactions').insert({
       supplier_id: supplier.id,
@@ -100,23 +71,12 @@ export const useSuppliers = (schoolId: string) => {
 
     if (txError) throw txError;
 
-    await loadSuppliers();
-    await loadTransactions(supplier.id);
+    await Promise.all([loadSuppliers(), loadTransactions(supplier.id)]);
   };
 
   const addBill = async (supplier: Supplier, billData: any) => {
     const amount = parseInt(billData.amount);
     const newBalance = supplier.current_balance + amount;
-
-    // Update supplier balance
-    const { error: supplierUpdateError } = await supabase
-      .from('suppliers')
-      .update({ 
-        current_balance: newBalance
-      })
-      .eq('id', supplier.id);
-
-    if (supplierUpdateError) throw supplierUpdateError;
 
     // Insert transaction
     const { error: txError } = await supabase.from('supplier_transactions').insert({
@@ -132,8 +92,7 @@ export const useSuppliers = (schoolId: string) => {
 
     if (txError) throw txError;
 
-    await loadSuppliers();
-    await loadTransactions(supplier.id);
+    await Promise.all([loadSuppliers(), loadTransactions(supplier.id)]);
   };
 
   useEffect(() => {
