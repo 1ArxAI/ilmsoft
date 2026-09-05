@@ -7,10 +7,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
 
-const env = Object.fromEntries(
-  fs.readFileSync('.env.local', 'utf8').split('\n').filter(l => l.includes('='))
-    .map(l => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; })
-);
+// Connection settings: .env.local when present (this Mac), otherwise the process environment (GitHub Actions).
+const env = fs.existsSync('.env.local')
+  ? Object.fromEntries(fs.readFileSync('.env.local', 'utf8').split('\n').filter(l => l.includes('='))
+      .map(l => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }))
+  : process.env;
 const client = new pg.Client({
   host: env.SUPABASE_DB_HOST, port: +env.SUPABASE_DB_PORT, database: env.SUPABASE_DB_NAME,
   user: env.SUPABASE_DB_USER, password: env.SUPABASE_DB_PASSWORD, ssl: { rejectUnauthorized: false },

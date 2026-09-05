@@ -1,0 +1,32 @@
+name: Nightly Database Backup
+
+on:
+  schedule:
+    - cron: '0 22 * * *'   # 22:00 UTC = 03:00 Pakistan
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Dump Supabase and store in Baserow
+    runs-on: ubuntu-latest
+    environment: supabase connect
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pg
+        run: npm install --no-save --no-audit --no-fund pg
+      - name: Dump the live database
+        env:
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          SUPABASE_DB_PORT: ${{ secrets.SUPABASE_DB_PORT }}
+          SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: node scripts/db_dump.mjs
+      - name: Store the backup in Baserow
+        env:
+          BASEROW_TOKEN: ${{ secrets.BASEROW_TOKEN }}
+          BASEROW_TABLE_ID: ${{ secrets.BASEROW_TABLE_ID }}
+        run: node scripts/backup_to_baserow.mjs
