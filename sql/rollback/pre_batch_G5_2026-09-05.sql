@@ -1,4 +1,4 @@
--- ROLLBACK SNAPSHOT Batch G5 2026-09-05T00:14:38.196Z
+-- ROLLBACK SNAPSHOT Batch G5 2026-09-05T01:30:05.194Z
 DROP VIEW IF EXISTS public.class_student_counts;
 DROP FUNCTION IF EXISTS public.school_financial_totals(uuid);
 DROP FUNCTION IF EXISTS public.missing_fee_parents(uuid,text);
@@ -8,12 +8,12 @@ DROP FUNCTION IF EXISTS public.trg_supplier_balance_sync();
 CREATE OR REPLACE FUNCTION public.update_supplier_balance()
  RETURNS trigger
  LANGUAGE plpgsql
+ SET search_path TO 'public'
 AS $function$
 BEGIN
-  -- On insert or opening_balance update
-  IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.opening_balance IS DISTINCT FROM NEW.opening_balance) THEN
-    -- Set current_balance to opening_balance initially
-    NEW.current_balance := NEW.opening_balance;
+  IF TG_OP = 'INSERT' OR OLD.opening_balance IS DISTINCT FROM NEW.opening_balance THEN
+    NEW.current_balance := COALESCE(NEW.opening_balance, 0)
+      + COALESCE((SELECT sum(CASE WHEN t.type = 'bill' THEN t.amount ELSE -t.amount END) FROM supplier_transactions t WHERE t.supplier_id = NEW.id), 0);
   END IF;
   RETURN NEW;
 END;

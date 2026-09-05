@@ -1,4 +1,4 @@
--- ROLLBACK SNAPSHOT for Batch E, 2026-09-04T23:14:31.611Z
+-- ROLLBACK SNAPSHOT for Batch E, 2026-09-05T01:29:24.080Z
 UPDATE storage.buckets SET file_size_limit=2097152, allowed_mime_types=ARRAY['image/png','image/jpeg','image/webp','image/gif','image/svg+xml'] WHERE id='logos';
 DROP POLICY IF EXISTS "admin_insert_admin_settings" ON public.admin_settings;
 CREATE POLICY "admin_insert_admin_settings" ON public.admin_settings FOR INSERT
