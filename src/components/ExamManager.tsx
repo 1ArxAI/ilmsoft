@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
-import type { ExamTerm, Class, Role } from '../lib/supabase';
+import type { ExamTerm, Role } from '../lib/supabase';
+import { useClasses, type ClassRow } from '../hooks/useClasses';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { 
   Plus, Calendar, Trash2, Edit2, 
@@ -18,7 +19,8 @@ interface ExamManagerProps {
 
 const ExamManager = ({ schoolId, role }: ExamManagerProps) => {
   const [terms, setTerms] = useState<ExamTerm[]>([]);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const { classes: allClasses } = useClasses(schoolId);
+  const classes: ClassRow[] = useMemo(() => allClasses.filter(c => c.active), [allClasses]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,25 +39,13 @@ const ExamManager = ({ schoolId, role }: ExamManagerProps) => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [termsRes, classesRes] = await Promise.all([
-        supabase
-          .from('exam_terms')
-          .select('id, school_id, name, academic_year, start_date, end_date, class_ids, created_at')
-          .eq('school_id', schoolId)
-          .order('start_date', { ascending: false }),
-        supabase
-          .from('classes')
-          .select('id, school_id, name, display_order, monthly_fee, admission_fee, active, subjects, created_at, updated_at')
-          .eq('school_id', schoolId)
-          .eq('active', true)
-          .order('name')
-      ]);
-
+      const termsRes = await supabase
+        .from('exam_terms')
+        .select('id, school_id, name, academic_year, start_date, end_date, class_ids, created_at')
+        .eq('school_id', schoolId)
+        .order('start_date', { ascending: false });
       if (termsRes.error) throw termsRes.error;
-      if (classesRes.error) throw classesRes.error;
-
       setTerms(termsRes.data || []);
-      setClasses(classesRes.data || []);
     } catch (err: any) {
       showFlash('Error loading exams: ' + err.message);
     } finally {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import useSWR from 'swr';
 import { supabase } from '../lib/supabase';
 import {
   TrendingUp, Calendar, Clock, Search, Users, AlertCircle, X,
@@ -195,10 +196,9 @@ export const FeeStatsManager = ({
   const today = useMemo(() => todayStr(), []);
 
   /* ── fetch all data using New System tables ──────────────────────── */
-  const loadStats = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
+  // Pure fetch + compute; SWR caches the result per school and month so a return to this tab is instant.
+  const computeStats = useCallback(async () => {
+    {
       const [feesRes, ledgerRes, classesRes, balancesRes] = await Promise.all([
         // 1. Current Month Generated Fees
         supabase
@@ -245,7 +245,6 @@ export const FeeStatsManager = ({
 
       /* ── KPI: Expected Monthly (Sum of net_amount generated for this month) ── */
       const expTotal = monthlyFees.reduce((sum, f) => sum + N(f.net_amount), 0);
-      setExpectedMonthly(expTotal);
 
       /* ── KPI: Received This Month ── */
       // Ledger payments recorded in this calendar month OR tagged with this month
@@ -256,11 +255,10 @@ export const FeeStatsManager = ({
         return created.getFullYear() === Number(currYear) && (created.getMonth() + 1) === Number(currMonth);
       });
       const receivedTotal = thisMonthLedger.reduce((sum, l) => sum + N(l.amount), 0);
-      setReceivedThisMonth(receivedTotal);
 
       /* ── KPI: Collected Today ── */
       const todayLedger = ledgerPayments.filter(l => l.created_at.startsWith(today));
-      setCollectedToday(todayLedger.reduce((sum, l) => sum + N(l.amount), 0));
+      const collectedTodayTotal = todayLedger.reduce((sum, l) => sum + N(l.amount), 0);
 
       /* ── Class-wise Breakdown ── */
       const classStats = new Map<string, { expected: number; collected: number }>();
@@ -302,7 +300,6 @@ export const FeeStatsManager = ({
         collected: Math.round(stats.collected)
       })).sort((a, b) => b.expected - a.expected);
 
-      setClassBreakdown(breakdown);
 
       /* ── Outstanding Dues ── */
       const duesRows: ParentDuesRow[] = parentBalances
@@ -322,16 +319,25 @@ export const FeeStatsManager = ({
         .filter(r => r.balance > 0)
         .sort((a, b) => b.balance - a.balance);
 
-      setAllParentDues(duesRows);
 
-    } catch (err: any) {
-      setError('Failed to load fee statistics: ' + err.message);
-    } finally {
-      setLoading(false);
+      return { expectedMonthly: expTotal, receivedThisMonth: receivedTotal, collectedToday: collectedTodayTotal, classBreakdown: breakdown, allParentDues: duesRows };
     }
   }, [schoolId, cm, today]);
 
-  useEffect(() => { loadStats(); }, [loadStats]);
+  const { data: stats, error: statsError, isLoading, mutate } = useSWR(schoolId ? ['fee-stats', schoolId, cm] : null, computeStats);
+  useEffect(() => {
+    if (!stats) return;
+    setExpectedMonthly(stats.expectedMonthly);
+    setReceivedThisMonth(stats.receivedThisMonth);
+    setCollectedToday(stats.collectedToday);
+    setClassBreakdown(stats.classBreakdown);
+    setAllParentDues(stats.allParentDues);
+  }, [stats]);
+  useEffect(() => {
+    setLoading(isLoading && !stats);
+    setError(statsError ? 'Failed to load fee statistics: ' + (statsError as Error).message : '');
+  }, [isLoading, stats, statsError]);
+  const loadStats = useCallback(() => { mutate(); }, [mutate]);
 
   /* ── filtered dues ── */
   const filteredDues = useMemo(() => {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { SWRConfig } from 'swr';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -48,14 +49,20 @@ function AppContent() {
   );
 }
 
+// Cached screen data: show what we have instantly, refresh in the background; never refetch just because
+// the window regained focus; collapse duplicate requests fired within 5 s (e.g. React's dev double effects).
+const swrOptions = { revalidateOnFocus: false, dedupingInterval: 5000 };
+
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <ErrorBoundary>
-          <AppContent />
-        </ErrorBoundary>
-      </Router>
-    </AuthProvider>
+    <SWRConfig value={swrOptions}>
+      <AuthProvider>
+        <Router>
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
+        </Router>
+      </AuthProvider>
+    </SWRConfig>
   );
 }

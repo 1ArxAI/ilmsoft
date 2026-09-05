@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { useClasses } from '../hooks/useClasses';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { Button } from './ui/Button';
 import { 
@@ -15,9 +16,7 @@ const StudentPromotion = ({ schoolId }: StudentPromotionProps) => {
   const { flash, showFlash } = useFlashMessage(5000);
   
   // Data State
-  const [classes, setClasses] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
-  const [loadingClasses, setLoadingClasses] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
   
   // Selection State
@@ -30,28 +29,8 @@ const StudentPromotion = ({ schoolId }: StudentPromotionProps) => {
   const [promoting, setPromoting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Load Classes
-  useEffect(() => {
-    const loadClasses = async () => {
-      setLoadingClasses(true);
-      try {
-        const { data, error } = await supabase
-          .from('classes')
-          .select('id, name, monthly_fee')
-          .eq('school_id', schoolId)
-          .eq('active', true)
-          .order('name');
-        
-        if (error) throw error;
-        setClasses(data || []);
-      } catch (err: any) {
-        showFlash('Error loading classes: ' + err.message);
-      } finally {
-        setLoadingClasses(false);
-      }
-    };
-    loadClasses();
-  }, [schoolId]);
+  const { classes: allClasses, loading: loadingClasses } = useClasses(schoolId);
+  const classes = useMemo(() => allClasses.filter(c => c.active), [allClasses]);
 
   // Load Students when Source Class changes
   useEffect(() => {

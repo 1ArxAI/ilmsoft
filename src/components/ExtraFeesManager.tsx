@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Role, ExtraFee, Class } from '../lib/supabase';
+import { useClasses } from '../hooks/useClasses';
+import type { Role, ExtraFee } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -17,7 +18,7 @@ const EMPTY = {
 export const ExtraFeesManager = ({ schoolId, role }: { schoolId: string; role?: Role }) => {
   const isOwner = role === 'owner';
   const [fees, setFees] = useState<ExtraFee[]>([]);
-  const [classList, setClassList] = useState<Class[]>([]);
+  const { classes: classList } = useClasses(schoolId);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
@@ -32,16 +33,9 @@ export const ExtraFeesManager = ({ schoolId, role }: { schoolId: string; role?: 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [feesRes, classesRes] = await Promise.all([
-        supabase.from('extra_fees').select('id, name, amount, due_date, classes, is_active, school_id, created_at').eq('school_id', schoolId).eq('is_active', true).order('due_date', { ascending: false }),
-        supabase.from('classes').select('id, name, active, school_id, display_order, monthly_fee, admission_fee, subjects, created_at, updated_at').eq('school_id', schoolId).order('name')
-      ]);
-      
+      const feesRes = await supabase.from('extra_fees').select('id, name, amount, due_date, classes, is_active, school_id, created_at').eq('school_id', schoolId).eq('is_active', true).order('due_date', { ascending: false });
       if (feesRes.error) throw feesRes.error;
-      if (classesRes.error) throw classesRes.error;
-      
       setFees(feesRes.data || []);
-      setClassList(classesRes.data || []);
     } catch (err: any) {
       showFlash('Error loading data: ' + err.message);
     } finally {

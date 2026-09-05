@@ -1,5 +1,6 @@
 import { sanitizeSearchTerm } from '../lib/validation';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import useSWR from 'swr';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/Button';
 import {
@@ -69,11 +70,9 @@ export const LedgerManager = ({
     setVisibleColumns(prev => ({ ...prev, [col]: !prev[col] }));
   };
 
-  const loadParents = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Join with parent_balances view
-      const term = sanitizeSearchTerm(debouncedSearch);
+  const term = sanitizeSearchTerm(debouncedSearch);
+  const fetchParents = useCallback(async () => {
+    {
       const { data, error } = await supabase
         .from('parents')
         .select(`
@@ -136,14 +135,18 @@ export const LedgerManager = ({
         finalData = formatted.filter(p => p.balance !== 0);
       }
 
-      setParents(finalData);
-
-    } catch (err: any) {
-      showFlash('Error loading ledger data: ' + err.message);
-    } finally {
-      setLoading(false);
+      return finalData;
     }
-  }, [schoolId, debouncedSearch, showFlash, hideZeroBalance]);
+  }, [schoolId, term, debouncedSearch, hideZeroBalance]);
+
+  // Cached per school / search / filter: returning to this tab shows the last list instantly, then refreshes.
+  const { data: parentData, isLoading: parentsLoading } = useSWR(
+    schoolId ? ['ledger-parents', schoolId, term, hideZeroBalance] : null,
+    fetchParents,
+    { onError: (err: Error) => showFlash('Error loading ledger data: ' + err.message) }
+  );
+  useEffect(() => { if (parentData) setParents(parentData); }, [parentData]);
+  useEffect(() => { setLoading(parentsLoading && !parentData); }, [parentsLoading, parentData]);
 
   // Deep link: select the requested parent once, when the list that contains it arrives.
   const deepLinkedRef = useRef<string | null>(null);
@@ -171,9 +174,6 @@ export const LedgerManager = ({
     }
   };
 
-  useEffect(() => {
-    loadParents();
-  }, [loadParents]);
 
   useEffect(() => {
     if (selectedParent) {

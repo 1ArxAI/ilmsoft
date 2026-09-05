@@ -1,25 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import useSWR from 'swr';
 import { supabase } from '../../lib/supabase';
 import type { Supplier, SupplierTransaction } from './types';
 
 export const useSuppliers = (schoolId: string) => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [transactions, setTransactions] = useState<SupplierTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const loadSuppliers = useCallback(async () => {
-    setLoading(true);
-    
-    const { data: suppliersData, error: suppliersError } = await supabase
+  // current_balance is maintained by a database trigger on supplier_transactions.
+  const { data, isLoading, mutate } = useSWR(schoolId ? ['suppliers', schoolId] : null, async () => {
+    const { data: rows, error } = await supabase
       .from('suppliers')
       .select('id, school_id, supplier_name, business_name, contact_number, address, opening_balance, current_balance, notes, created_at')
       .eq('school_id', schoolId)
       .order('supplier_name');
-    if (suppliersError) console.error('Error loading suppliers:', suppliersError);
-    // current_balance is maintained by a database trigger on supplier_transactions.
-    setSuppliers(suppliersData || []);
-    setLoading(false);
-  }, [schoolId]);
+    if (error) throw error;
+    return (rows || []) as Supplier[];
+  });
+  const suppliers = data || [];
+  const loading = isLoading && !data;
+  const loadSuppliers = useCallback(async () => { await mutate(); }, [mutate]);
 
   const loadTransactions = useCallback(async (supplierId: string) => {
     const { data, error } = await supabase
@@ -95,9 +94,6 @@ export const useSuppliers = (schoolId: string) => {
     await Promise.all([loadSuppliers(), loadTransactions(supplier.id)]);
   };
 
-  useEffect(() => {
-    loadSuppliers();
-  }, [loadSuppliers]);
 
   return {
     suppliers,
