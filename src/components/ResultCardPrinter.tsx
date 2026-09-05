@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/Button';
 import { Printer, X, Loader2 } from 'lucide-react';
 
@@ -12,15 +13,20 @@ interface ResultCardPrinterProps {
   onClose: () => void;
 }
 
-export const ResultCardPrinter: React.FC<ResultCardPrinterProps> = ({ 
-  schoolId, termId, classId, studentIds, onClose 
+export const ResultCardPrinter: React.FC<ResultCardPrinterProps> = ({
+  termId, classId, studentIds, onClose
 }) => {
+  // School name, logo and brand colours are already in the signed-in profile; no extra query.
+  const { profile } = useAuth();
+  const school = {
+    name: profile?.school_name || '',
+    logo: profile?.logo_url || '',
+    primary: profile?.primary_color || '#1a237e',
+    secondary: profile?.secondary_color || '#947029',
+    tertiary: profile?.tertiary_color || '#f1f5f9',
+  };
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<any[]>([]);
-  const [school, setSchool] = useState({ 
-    name: '', logo: '', 
-    primary: '#1a237e', secondary: '#947029', tertiary: '#f1f5f9' 
-  });
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [term, setTerm] = useState<any>(null);
   const [className, setClassName] = useState('');
@@ -28,8 +34,7 @@ export const ResultCardPrinter: React.FC<ResultCardPrinterProps> = ({
   const loadAllData = useCallback(async () => {
     setLoading(true);
     try {
-      const [schoolRes, termRes, classRes, configRes, studentsRes, resultsRes] = await Promise.all([
-        supabase.from('schools').select('school_name, logo_url, primary_color, secondary_color, tertiary_color').eq('id', schoolId).single(),
+      const [termRes, classRes, configRes, studentsRes, resultsRes] = await Promise.all([
         supabase.from('exam_terms').select('id, name, academic_year').eq('id', termId).single(),
         supabase.from('classes').select('name, subjects').eq('id', classId).single(),
         supabase.from('exam_term_configs').select('subject_totals').eq('exam_term_id', termId).eq('class_id', classId).maybeSingle(),
@@ -37,15 +42,6 @@ export const ResultCardPrinter: React.FC<ResultCardPrinterProps> = ({
         supabase.from('exam_results').select('student_id, subject_marks').eq('exam_term_id', termId).in('student_id', studentIds),
       ]);
 
-      if (schoolRes.data) {
-        setSchool({ 
-          name: schoolRes.data.school_name, 
-          logo: schoolRes.data.logo_url,
-          primary: (schoolRes.data as any).primary_color || '#1a237e',
-          secondary: (schoolRes.data as any).secondary_color || '#947029',
-          tertiary: (schoolRes.data as any).tertiary_color || '#f1f5f9'
-        });
-      }
       if (termRes.data) setTerm(termRes.data);
       if (classRes.data) setClassName(classRes.data.name);
 
@@ -96,7 +92,7 @@ export const ResultCardPrinter: React.FC<ResultCardPrinterProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [schoolId, termId, classId, studentIds]);
+  }, [termId, classId, studentIds]);
 
   useEffect(() => { loadAllData(); }, [loadAllData]);
 

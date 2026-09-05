@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/Button';
 import { Printer, X, Loader2 } from 'lucide-react';
 import './PaymentReceipt.css';
@@ -23,28 +24,26 @@ interface PaymentReceiptProps {
   onClose: () => void;
 }
 
-export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ schoolId, paymentId, onClose }) => {
+export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ paymentId, onClose }) => {
+  // School name and logo are already in the signed-in profile; no extra query.
+  const { profile } = useAuth();
+  const schoolName = profile?.school_name || 'School Receipt';
+  const logo = profile?.logo_url || null;
   const [loading, setLoading] = useState(true);
   const [receipt, setReceipt] = useState<PaymentData | null>(null);
-  const [schoolName, setSchoolName] = useState('School Receipt');
-  const [logo, setLogo] = useState<string | null>(null);
   const [logoLoaded, setLogoLoaded] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [schoolRes, payRes] = await Promise.all([
-        supabase.from('schools').select('school_name, logo_url').eq('id', schoolId).single(),
-        supabase
-          .from('payments')
-          .select(`
-            id, parent_id, received_amount, payment_method, notes, received_at,
-            parents:parent_id(first_name, last_name, contact, students(first_name, last_name), parent_balances(balance))
-          `)
-          .eq('id', paymentId)
-          .single(),
-      ]);
-      if (schoolRes.data) { setSchoolName(schoolRes.data.school_name); setLogo(schoolRes.data.logo_url); }
+      const payRes = await supabase
+        .from('payments')
+        .select(`
+          id, parent_id, received_amount, payment_method, notes, received_at,
+          parents:parent_id(first_name, last_name, contact, students(first_name, last_name), parent_balances(balance))
+        `)
+        .eq('id', paymentId)
+        .single();
       if (payRes.error) throw payRes.error;
       const paymentData = payRes.data as any;
       const studentData = (paymentData.parents?.students || []) as { first_name: string; last_name: string }[];
@@ -68,7 +67,7 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ schoolId, paymen
     } finally {
       setLoading(false);
     }
-  }, [schoolId, paymentId]);
+  }, [paymentId]);
 
   useEffect(() => {
     fetchData();

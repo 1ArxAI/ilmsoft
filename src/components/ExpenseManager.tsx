@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import useSWR from 'swr';
 import { supabase, fetchAll } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
@@ -42,9 +43,6 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
   const { flash, showFlash } = useFlashMessage(4000);
   const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,66 +63,43 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
   const [newCategory, setNewCategory] = useState('');
   const [showCategoryForm, setShowCategoryForm] = useState(false);
 
-  // Performance optimization: wrap load functions in useCallback
-  const loadCategories = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
+  // SWR caches per school, so returning to this tab shows data instantly; writes call mutate() to refresh.
+  const { data, error: loadError, isLoading: loading, mutate } = useSWR(['expenses', schoolId], async () => {
+    const [catRes, expRes] = await Promise.all([
+      supabase
         .from('expense_categories')
         .select('id, school_id, name, is_default, created_at')
         .eq('school_id', schoolId)
-        .order('name');
-      
-      if (error) {
-        showFlash('Error loading categories: ' + error.message);
-        return;
-      }
-      
-      if (data) setCategories(data);
-    } catch (err: any) {
-      showFlash('Error loading categories: ' + err.message);
-    }
-  }, [schoolId]);
-
-  const loadExpenses = useCallback(async () => {
-    try {
-      const { data, error } = await fetchAll((from, to) => supabase
+        .order('name'),
+      fetchAll((from, to) => supabase
         .from('expenses')
         .select(`id, school_id, category_id, amount, expense_date, payment_method, description, paid_by, additional_notes, created_at, categories:category_id (name)`)
         .eq('school_id', schoolId)
         .order('expense_date', { ascending: false }).order('id')
-        .range(from, to));
-      
-      if (error) {
-        showFlash('Error loading expenses: ' + error.message);
-        return;
-      }
-      
-      if (data) {
-        const formatted = data.map((e: any) => ({
-          ...e,
-          category_name: e.categories?.name || 'Unknown'
-        }));
-        setExpenses(formatted as Expense[]);
-      }
-    } catch (err: any) {
-      showFlash('Error loading expenses: ' + err.message);
-    }
-  }, [schoolId]);
+        .range(from, to)),
+    ]);
+    if (catRes.error) throw new Error('Error loading categories: ' + catRes.error.message);
+    if (expRes.error) throw new Error('Error loading expenses: ' + expRes.error.message);
+    const expenses = (expRes.data || []).map((e: any) => ({ ...e, category_name: e.categories?.name || 'Unknown' })) as Expense[];
+    return { categories: (catRes.data || []) as ExpenseCategory[], expenses };
+  });
+  const categories = useMemo(() => data?.categories ?? [], [data]);
+  const expenses = useMemo(() => data?.expenses ?? [], [data]);
+  useEffect(() => { if (loadError) showFlash(loadError.message); }, [loadError, showFlash]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await Promise.all([loadCategories(), loadExpenses()]);
-    } catch (err: any) {
-      showFlash('Error loading data: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [loadCategories, loadExpenses]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const resetForm = () => {
+    setFormData({
+      category_id: '',
+      amount: '',
+      expense_date: new Date().toISOString().split('T')[0],
+      payment_method: 'Cash',
+      description: '',
+      paid_by: '',
+      additional_notes: ''
+    });
+    setShowForm(false);
+    setEditingId(null);
+  };
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,26 +142,12 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
       }
 
       resetForm();
-      loadExpenses();
+      mutate();
     } catch (err: any) {
       showFlash('Error saving expense: ' + err.message);
       setProcessingId(null);
     }
-  }, [schoolId, formData, editingId, showFlash, loadExpenses]);
-
-  const resetForm = () => {
-    setFormData({
-      category_id: '',
-      amount: '',
-      expense_date: new Date().toISOString().split('T')[0],
-      payment_method: 'Cash',
-      description: '',
-      paid_by: '',
-      additional_notes: ''
-    });
-    setShowForm(false);
-    setEditingId(null);
-  };
+  }, [schoolId, formData, editingId, showFlash, mutate]);
 
   const handleEdit = (expense: Expense) => {
     setFormData({
@@ -211,7 +172,7 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
         if (error) {
           showFlash('Error deleting expense: ' + error.message);
         } else {
-          loadExpenses();
+          mutate();
         }
         setProcessingId(null);
         setConfirmAction(null);
@@ -233,11 +194,11 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
       showFlash('Category added successfully');
       setNewCategory('');
       setShowCategoryForm(false);
-      loadCategories();
+      mutate();
     } catch (err: any) {
       showFlash('Error adding category: ' + err.message);
     }
-  }, [newCategory, schoolId, showFlash, loadCategories]);
+  }, [newCategory, schoolId, showFlash, mutate]);
 
   const deleteCategory = (id: string, isDefault: boolean) => {
     if (isDefault) {
@@ -248,7 +209,7 @@ export const ExpenseManager = ({ schoolId, role }: ExpenseManagerProps) => {
       message: 'Delete this category?',
       onConfirm: async () => {
         await supabase.from('expense_categories').delete().eq('id', id);
-        loadCategories();
+        mutate();
         setConfirmAction(null);
       }
     });

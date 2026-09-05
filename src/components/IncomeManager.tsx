@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import useSWR from 'swr';
 import { supabase, fetchAll } from '../lib/supabase';
 import type { Role } from '../lib/supabase';
 import { useFlashMessage } from '../hooks/useFlashMessage';
@@ -41,9 +42,6 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
   const isOwner = role === 'owner';
   const { flash, showFlash } = useFlashMessage(4000);
   const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null);
-  const [categories, setCategories] = useState<IncomeCategory[]>([]);
-  const [records, setRecords] = useState<IncomeRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,65 +60,35 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
     additional_notes: ''
   });
 
-  const loadCategories = useCallback(async () => {
-    const { data, error } = await supabase
+  // SWR caches per school, so returning to this tab shows data instantly; writes call mutate() to refresh.
+  const { data, error: loadError, isLoading: loading, mutate } = useSWR(['income', schoolId], async () => {
+    const catQuery = () => supabase
       .from('income_categories')
       .select('id, school_id, name, is_default, created_at')
       .eq('school_id', schoolId)
       .order('name', { ascending: true });
-
-    if (error) {
-      showFlash('Error loading categories: ' + error.message);
-      return;
-    }
-
-    if (data && data.length === 0) {
-      const defaultCats = DEFAULT_CATEGORIES.map(name => ({
-        school_id: schoolId,
-        name,
-        is_default: true
-      }));
-      await supabase.from('income_categories').insert(defaultCats);
-      const { data: newData } = await supabase
-        .from('income_categories')
-        .select('id, school_id, name, is_default, created_at')
+    const [catRes, recRes] = await Promise.all([
+      catQuery(),
+      fetchAll((from, to) => supabase
+        .from('income_records')
+        .select(`id, school_id, category_id, amount, date, payment_method, description, additional_notes, created_at, category:category_id(name)`)
         .eq('school_id', schoolId)
-        .order('name', { ascending: true });
-      setCategories(newData || []);
-    } else {
-      setCategories(data || []);
+        .order('date', { ascending: false }).order('id')
+        .range(from, to)),
+    ]);
+    if (catRes.error) throw new Error('Error loading categories: ' + catRes.error.message);
+    if (recRes.error) throw new Error('Error loading records: ' + recRes.error.message);
+    let categories = catRes.data || [];
+    if (categories.length === 0) {
+      await supabase.from('income_categories').insert(DEFAULT_CATEGORIES.map(name => ({ school_id: schoolId, name, is_default: true })));
+      categories = (await catQuery()).data || [];
     }
-  }, [schoolId, showFlash]);
-
-  const loadRecords = useCallback(async () => {
-    const { data, error } = await fetchAll((from, to) => supabase
-      .from('income_records')
-      .select(`id, school_id, category_id, amount, date, payment_method, description, additional_notes, created_at, category:category_id(name)`)
-      .eq('school_id', schoolId)
-      .order('date', { ascending: false }).order('id')
-      .range(from, to));
-
-    if (error) {
-      showFlash('Error loading records: ' + error.message);
-      return;
-    }
-
-    const formatted = (data || []).map((r: any) => ({
-      ...r,
-      category_name: r.category?.name || 'Unknown'
-    }));
-    setRecords(formatted as IncomeRecord[]);
-  }, [schoolId, showFlash]);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    await Promise.all([loadCategories(), loadRecords()]);
-    setLoading(false);
-  }, [loadCategories, loadRecords]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+    const records = (recRes.data || []).map((r: any) => ({ ...r, category_name: r.category?.name || 'Unknown' })) as IncomeRecord[];
+    return { categories: categories as IncomeCategory[], records };
+  });
+  const categories = useMemo(() => data?.categories ?? [], [data]);
+  const records = useMemo(() => data?.records ?? [], [data]);
+  useEffect(() => { if (loadError) showFlash(loadError.message); }, [loadError, showFlash]);
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -173,11 +141,11 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
 
       resetForm();
       setShowForm(false);
-      loadRecords();
+      mutate();
     } catch (err: any) {
       showFlash('Error saving income: ' + err.message);
     }
-  }, [schoolId, formData, editingId, showFlash, loadRecords, resetForm]);
+  }, [schoolId, formData, editingId, showFlash, mutate, resetForm]);
 
   const startEdit = (record: IncomeRecord) => {
     setEditingId(record.id);
@@ -198,7 +166,7 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
       onConfirm: async () => {
         const { error } = await supabase.from('income_records').delete().eq('id', id);
         if (error) showFlash('Error deleting: ' + error.message);
-        else loadRecords();
+        else mutate();
         setConfirmAction(null);
       }
     });
@@ -219,12 +187,12 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
       else {
         setNewCategoryName('');
         setShowCategoryForm(false);
-        loadCategories();
+        mutate();
       }
     } catch (err: any) {
       showFlash('Error adding category: ' + err.message);
     }
-  }, [newCategoryName, schoolId, showFlash, loadCategories]);
+  }, [newCategoryName, schoolId, showFlash, mutate]);
 
   const deleteCategory = (id: string) => {
     setConfirmAction({
@@ -232,7 +200,7 @@ export const IncomeManager = ({ schoolId, role }: IncomeManagerProps) => {
       onConfirm: async () => {
         const { error } = await supabase.from('income_categories').delete().eq('id', id);
         if (error) showFlash('Error: ' + error.message);
-        else loadCategories();
+        else mutate();
         setConfirmAction(null);
       }
     });

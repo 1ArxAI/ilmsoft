@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/Button';
 import { Printer, X, Loader2 } from 'lucide-react';
 import './PaymentReceipt.css'; 
@@ -30,27 +31,17 @@ interface CustomReceiptPrinterProps {
   onClose: () => void;
 }
 
-export const CustomReceiptPrinter: React.FC<CustomReceiptPrinterProps> = ({ schoolId, receiptId, onClose }) => {
+export const CustomReceiptPrinter: React.FC<CustomReceiptPrinterProps> = ({ receiptId, onClose }) => {
+  // School name and logo are already in the signed-in profile; no extra query.
+  const { profile } = useAuth();
+  const school = { name: profile?.school_name || 'School', logo: profile?.logo_url || '' };
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CustomReceiptData | null>(null);
-  const [school, setSchool] = useState({ name: 'School', logo: '' });
   const [logoLoaded, setLogoLoaded] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch School
-      const { data: schoolRes } = await supabase
-        .from('schools')
-        .select('school_name, logo_url')
-        .eq('id', schoolId)
-        .single();
-      
-      if (schoolRes) {
-        setSchool({ name: schoolRes.school_name, logo: schoolRes.logo_url });
-      }
-
-      // 2. Fetch Receipt
       const { data: recRes, error } = await supabase
         .from('custom_receipts')
         .select('id, type, receipt_no, recipient_name, date, due_date, items, total_amount, notes, school_id')
@@ -65,7 +56,7 @@ export const CustomReceiptPrinter: React.FC<CustomReceiptPrinterProps> = ({ scho
     } finally {
       setLoading(false);
     }
-  }, [schoolId, receiptId]);
+  }, [receiptId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

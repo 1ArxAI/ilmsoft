@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { SWRConfig } from 'swr';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -9,17 +9,21 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { JoinInvite } from './pages/JoinInvite';
 import { Dashboard } from './pages/Dashboard';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { AdminSchoolInsights } from './pages/AdminSchoolInsights';
 import { ResetPassword } from './pages/ResetPassword';
 import { UpdatePassword } from './pages/UpdatePassword';
 import './App.css';
 
+// Platform-admin pages are only ever opened by the platform admin; school users never download them.
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminSchoolInsights = lazy(() => import('./pages/AdminSchoolInsights').then(m => ({ default: m.AdminSchoolInsights })));
+
+const Spinner = () => <div className="loading-spinner"><div className="loading-spinner-icon" /> Loading…</div>;
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
-  if (loading) return <div className="loading-spinner"><div className="loading-spinner-icon" /> Loading…</div>;
+  if (loading) return <Spinner />;
   if (!session) return <Navigate to="/login" replace />;
-  return <>{children}</>;
+  return <Suspense fallback={<Spinner />}>{children}</Suspense>;
 };
 
 function AppContent() {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase, fetchAll } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/Button';
 import { Printer, X, Loader2, Search, Filter, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import './InvoicePrinter.css';
@@ -30,10 +31,12 @@ interface InvoicePrinterProps {
 }
 
 export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month, onClose, parentId }) => {
+  // School name and logo are already in the signed-in profile; no extra query.
+  const { profile } = useAuth();
+  const schoolName = profile?.school_name || 'School Invoice';
+  const logo = profile?.logo_url || null;
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
-  const [schoolName, setSchoolName] = useState('School Invoice');
-  const [logo, setLogo] = useState<string | null>(null);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [classList, setClassList] = useState<{id: string, name: string}[]>([]);
   
@@ -80,15 +83,13 @@ export const InvoicePrinter: React.FC<InvoicePrinterProps> = ({ schoolId, month,
         .eq('active', true);
       if (parentId) studentQuery = studentQuery.eq('parent_id', parentId);
 
-      const [schoolRes, classRes, parentRes, feeRes, studentRes] = await Promise.all([
-        supabase.from('schools').select('school_name, logo_url').eq('id', schoolId).single(),
+      const [classRes, parentRes, feeRes, studentRes] = await Promise.all([
         supabase.from('classes').select('id, name').eq('school_id', schoolId).order('name'),
         fetchAll((from, to) => parentQuery.order('id').range(from, to)),
         fetchAll((from, to) => feeQuery.order('id').range(from, to)),
         fetchAll((from, to) => studentQuery.order('id').range(from, to)),
       ]);
 
-      if (schoolRes.data) { setSchoolName(schoolRes.data.school_name); setLogo(schoolRes.data.logo_url); }
       if (classRes.data) setClassList(classRes.data);
       if (parentRes.error) throw parentRes.error;
       const parentData = parentRes.data;
