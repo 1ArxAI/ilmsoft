@@ -507,7 +507,7 @@ export const FeeStatsManager = ({
                     <td>
                       <div className="fss-parent-cell">
                         <div className="fss-parent-avatar">{row.name.charAt(0)}</div>
-                        <span>{row.name}</span>
+                        <span className="fss-parent-owes">{row.name}</span>
                       </div>
                     </td>
                     <td>{row.contact}</td>

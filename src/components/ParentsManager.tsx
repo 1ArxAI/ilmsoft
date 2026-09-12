@@ -41,7 +41,7 @@ export const ParentsManager = ({
   
   const {
     records, loading, classes,
-    studentCounts, monthlyTotals, discountTotals,
+    studentCounts, monthlyTotals, discountTotals, dues,
     parentStats, load, loadClasses
   } = useParents(schoolId, showFlash);
 
@@ -417,6 +417,7 @@ export const ParentsManager = ({
                 studentCounts={studentCounts}
                 monthlyTotals={monthlyTotals}
                 discountTotals={discountTotals}
+                dues={dues}
                 onAddChild={openAddChild}
                 onView={setViewTarget}
               />

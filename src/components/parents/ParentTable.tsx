@@ -7,6 +7,7 @@ interface ParentTableProps {
   studentCounts: Record<string, number>;
   monthlyTotals: Record<string, number>;
   discountTotals: Record<string, number>;
+  dues: Record<string, number>;
   onAddChild: (p: Parent) => void;
   onView: (p: Parent) => void;
 }
@@ -16,6 +17,7 @@ export const ParentTable = React.memo<ParentTableProps>(({
   studentCounts,
   monthlyTotals,
   discountTotals,
+  dues,
   onAddChild,
   onView
 }) => {
@@ -37,8 +39,11 @@ export const ParentTable = React.memo<ParentTableProps>(({
           {records.map((r: Parent) => (
             <tr key={r.id}>
               <td>
-                <div className="student-cell">
-                  <span style={{ fontWeight: 600 }}>{r.first_name} {r.last_name}</span>
+                <div className="student-cell" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                  <span style={{ fontWeight: 600, color: dues[r.id] ? 'var(--danger)' : undefined }}>{r.first_name} {r.last_name}</span>
+                  {dues[r.id] > 0 && (
+                    <small style={{ color: 'var(--danger)', fontSize: 'var(--font-xs)' }}>Rs {dues[r.id].toLocaleString()} due</small>
+                  )}
                 </div>
               </td>
               <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{r.cnic}</td>

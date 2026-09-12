@@ -395,6 +395,9 @@
   gap: 0.75rem;
 }
 
+/* Everyone in the dues list owes the school: name in red so it reads at a glance. */
+.fss-parent-owes { color: #f87171; font-weight: 600; }
+
 .fss-parent-avatar {
   width: 36px;
   height: 36px;

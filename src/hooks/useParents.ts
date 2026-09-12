@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import useSWR from 'swr';
+import { supabase, fetchAll } from '../lib/supabase';
 import { fetchSchoolData } from './useStudents';
 
 export type Parent = {
@@ -30,6 +31,18 @@ export const useParents = (schoolId: string, showFlash?: (msg: string) => void) 
       }
     }
   );
+
+  // Outstanding dues per parent (ledger balance < 0 means the family owes the school).
+  const { data: duesData } = useSWR(schoolId ? ['parent-dues', schoolId] : null, async () => {
+    const { data, error } = await fetchAll((from, to) => supabase
+      .from('parent_balances').select('parent_id, balance')
+      .eq('school_id', schoolId).lt('balance', 0).order('parent_id').range(from, to));
+    if (error) throw new Error(error.message);
+    const dues: Record<string, number> = {};
+    for (const b of data as { parent_id: string; balance: number }[]) dues[b.parent_id] = Math.round(-Number(b.balance));
+    return dues;
+  });
+  const dues = duesData || {};
 
   const records = (data?.parents || []) as Parent[];
   const students = data?.students || [];
@@ -89,6 +102,7 @@ export const useParents = (schoolId: string, showFlash?: (msg: string) => void) 
     studentCounts,
     monthlyTotals,
     discountTotals,
+    dues,
     globalStats,
     parentStats,
     load: mutate,
