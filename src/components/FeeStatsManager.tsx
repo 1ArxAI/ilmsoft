@@ -359,6 +359,9 @@ export const FeeStatsManager = ({
     });
   }, [allParentDues, searchTerm]);
 
+  /* ── total receivables: every active family's outstanding balance ── */
+  const totalReceivables = useMemo(() => allParentDues.reduce((s, r) => s + r.balance, 0), [allParentDues]);
+
   /* ── collection rate ── */
   const collectionRate = expectedMonthly > 0
     ? Math.min(100, Math.round((receivedThisMonth / expectedMonthly) * 100))
@@ -422,6 +425,17 @@ export const FeeStatsManager = ({
             <div className="fss-kpi-label">Collected Today</div>
             <div className="fss-kpi-value">{formatPKR(collectedToday)}</div>
             <div className="fss-kpi-sub">New payments recorded today</div>
+          </div>
+        </div>
+
+        <div className="fss-kpi-card red">
+          <div className="fss-kpi-icon"><Users size={20} /></div>
+          <div className="fss-kpi-body">
+            <div className="fss-kpi-label">Total Receivables</div>
+            <div className="fss-kpi-value">{formatPKR(totalReceivables)}</div>
+            <div className="fss-kpi-sub">
+              {allParentDues.length === 0 ? 'No outstanding dues' : `Owed by ${allParentDues.length} ${allParentDues.length === 1 ? 'family' : 'families'}, all months`}
+            </div>
           </div>
         </div>
       </div>
