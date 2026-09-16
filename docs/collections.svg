@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="1200" height="360" rx="24" fill="#fcfcfb" stroke="#e1e0d9"/>
+  <text x="48" y="44" font-size="20" font-weight="700" fill="#0b0b0b">Class-wise: billed vs collected this month</text>
+  <text x="48" y="66" font-size="13" fill="#898781">Sample data. Rupees in thousands.</text>
+
+  <!-- legend -->
+  <g transform="translate(900,36)" font-size="13" fill="#52514e">
+    <rect width="12" height="12" rx="3" fill="#2a78d6"/><text x="18" y="11">Billed</text>
+    <rect x="80" width="12" height="12" rx="3" fill="#eb6834"/><text x="98" y="11">Collected</text>
+  </g>
+
+  <!-- plot area: x 100..1150, baseline y=300, top y=100 (200px = 60k) -->
+  <g stroke="#e1e0d9" stroke-width="1">
+    <line x1="100" y1="100" x2="1150" y2="100"/>
+    <line x1="100" y1="166.7" x2="1150" y2="166.7"/>
+    <line x1="100" y1="233.3" x2="1150" y2="233.3"/>
+  </g>
+  <g font-size="12" fill="#898781" text-anchor="end">
+    <text x="90" y="104">60</text>
+    <text x="90" y="171">40</text>
+    <text x="90" y="237">20</text>
+    <text x="90" y="304">0</text>
+  </g>
+  <line x1="100" y1="300" x2="1150" y2="300" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <!-- bars: each class group 105px wide; bars 34px, 2px gap. height = value/60*200 -->
+  <!-- Nursery: billed 36, collected 31 -->
+  <g transform="translate(125,0)">
+    <rect x="0" y="180" width="34" height="120" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="196.7" width="34" height="103.3" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">Nursery</text>
+  </g>
+  <!-- KG: 42 / 40 -->
+  <g transform="translate(255,0)">
+    <rect x="0" y="160" width="34" height="140" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="166.7" width="34" height="133.3" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">KG</text>
+  </g>
+  <!-- Class 1: 48 / 33 -->
+  <g transform="translate(385,0)">
+    <rect x="0" y="140" width="34" height="160" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="190" width="34" height="110" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="53" y="182" font-size="12" font-weight="700" fill="#52514e" text-anchor="middle">33</text>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">Class 1</text>
+  </g>
+  <!-- Class 2: 45 / 44 -->
+  <g transform="translate(515,0)">
+    <rect x="0" y="150" width="34" height="150" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="153.3" width="34" height="146.7" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">Class 2</text>
+  </g>
+  <!-- Class 3: 40 / 38 -->
+  <g transform="translate(645,0)">
+    <rect x="0" y="166.7" width="34" height="133.3" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="173.3" width="34" height="126.7" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">Class 3</text>
+  </g>
+  <!-- Class 4: 38 / 22 -->
+  <g transform="translate(775,0)">
+    <rect x="0" y="173.3" width="34" height="126.7" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="226.7" width="34" height="73.3" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="53" y="219" font-size="12" font-weight="700" fill="#52514e" text-anchor="middle">22</text>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">Class 4</text>
+  </g>
+  <!-- Class 5: 36 / 34 -->
+  <g transform="translate(905,0)">
+    <rect x="0" y="180" width="34" height="120" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="186.7" width="34" height="113.3" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">Class 5</text>
+  </g>
+  <!-- Class 6: 35 / 14 -->
+  <g transform="translate(1035,0)">
+    <rect x="0" y="183.3" width="34" height="116.7" rx="4" fill="#2a78d6"/><rect x="0" y="296" width="34" height="4" fill="#2a78d6"/>
+    <rect x="36" y="253.3" width="34" height="46.7" rx="4" fill="#eb6834"/><rect x="36" y="296" width="34" height="4" fill="#eb6834"/>
+    <text x="53" y="245" font-size="12" font-weight="700" fill="#52514e" text-anchor="middle">14</text>
+    <text x="35" y="326" font-size="13" fill="#52514e" text-anchor="middle">Class 6</text>
+  </g>
+
+  <text x="48" y="352" font-size="12" fill="#898781">Classes 1, 4 and 6 need a call this week. The chart says so before the month ends.</text>
+</svg>

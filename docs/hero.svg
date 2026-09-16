@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d366b"/>
+      <stop offset="1" stop-color="#2a78d6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="420" rx="24" fill="url(#bg)"/>
+
+  <!-- copy -->
+  <text x="72" y="118" font-size="30" font-weight="700" fill="#cde2fb" letter-spacing="1">ilmsoft</text>
+  <text x="72" y="182" font-size="46" font-weight="800" fill="#ffffff">Fee collection for</text>
+  <text x="72" y="236" font-size="46" font-weight="800" fill="#ffffff">small schools.</text>
+  <text x="72" y="286" font-size="22" fill="#cde2fb">Know who has paid, who owes, and how the month is going.</text>
+  <text x="72" y="318" font-size="22" fill="#cde2fb">From your phone. In two minutes a day.</text>
+  <g transform="translate(72,346)">
+    <rect width="150" height="40" rx="20" fill="#ffffff"/>
+    <text x="75" y="26" font-size="16" font-weight="700" fill="#0d366b" text-anchor="middle">Free to self-host</text>
+    <rect x="166" width="132" height="40" rx="20" fill="none" stroke="#cde2fb" stroke-width="2"/>
+    <text x="232" y="26" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">MIT licensed</text>
+  </g>
+
+  <!-- phone -->
+  <g transform="translate(830,36)">
+    <rect width="300" height="348" rx="34" fill="#0b0b0b"/>
+    <rect x="10" y="10" width="280" height="328" rx="26" fill="#fcfcfb"/>
+    <rect x="110" y="18" width="80" height="8" rx="4" fill="#0b0b0b"/>
+    <!-- header -->
+    <text x="30" y="60" font-size="15" font-weight="700" fill="#0b0b0b">Parents &amp; Guardians</text>
+    <text x="30" y="80" font-size="11" fill="#898781">Families who owe are in red</text>
+    <!-- rows -->
+    <g font-size="13">
+      <g transform="translate(30,100)">
+        <circle cx="12" cy="12" r="12" fill="#cde2fb"/><text x="12" y="16" font-size="11" font-weight="700" fill="#0d366b" text-anchor="middle">A</text>
+        <text x="34" y="11" font-weight="600" fill="#0b0b0b">Ahmed Raza</text>
+        <text x="34" y="25" font-size="11" fill="#898781">2 children · paid</text>
+      </g>
+      <g transform="translate(30,142)">
+        <circle cx="12" cy="12" r="12" fill="#f8d4d4"/><text x="12" y="16" font-size="11" font-weight="700" fill="#d03b3b" text-anchor="middle">S</text>
+        <text x="34" y="11" font-weight="600" fill="#d03b3b">Sana Iqbal</text>
+        <text x="34" y="25" font-size="11" fill="#d03b3b">Rs 4,500 due</text>
+      </g>
+      <g transform="translate(30,184)">
+        <circle cx="12" cy="12" r="12" fill="#cde2fb"/><text x="12" y="16" font-size="11" font-weight="700" fill="#0d366b" text-anchor="middle">B</text>
+        <text x="34" y="11" font-weight="600" fill="#0b0b0b">Bilal Khan</text>
+        <text x="34" y="25" font-size="11" fill="#898781">1 child · paid</text>
+      </g>
+      <g transform="translate(30,226)">
+        <circle cx="12" cy="12" r="12" fill="#f8d4d4"/><text x="12" y="16" font-size="11" font-weight="700" fill="#d03b3b" text-anchor="middle">F</text>
+        <text x="34" y="11" font-weight="600" fill="#d03b3b">Farhan Malik</text>
+        <text x="34" y="25" font-size="11" fill="#d03b3b">Rs 9,000 due</text>
+      </g>
+      <g transform="translate(30,268)">
+        <circle cx="12" cy="12" r="12" fill="#cde2fb"/><text x="12" y="16" font-size="11" font-weight="700" fill="#0d366b" text-anchor="middle">H</text>
+        <text x="34" y="11" font-weight="600" fill="#0b0b0b">Hina Aslam</text>
+        <text x="34" y="25" font-size="11" fill="#898781">3 children · paid</text>
+      </g>
+    </g>
+    <!-- collect button -->
+    <rect x="30" y="300" width="240" height="28" rx="14" fill="#2a78d6"/>
+    <text x="150" y="319" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">Collect fee</text>
+  </g>
+</svg>

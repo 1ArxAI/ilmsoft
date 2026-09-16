@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="230" viewBox="0 0 1200 230" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="1200" height="230" rx="24" fill="#fcfcfb" stroke="#e1e0d9"/>
+  <text x="48" y="44" font-size="20" font-weight="700" fill="#0b0b0b">Fee Stats, the way a principal reads it</text>
+  <text x="48" y="66" font-size="13" fill="#898781">Sample numbers for a school of 180 students</text>
+
+  <!-- tile 1 -->
+  <g transform="translate(48,88)">
+    <rect width="258" height="110" rx="14" fill="#ffffff" stroke="#e1e0d9"/>
+    <rect width="258" height="5" rx="2.5" fill="#eda100"/>
+    <text x="20" y="36" font-size="12" font-weight="700" fill="#898781" letter-spacing="1">BILLED THIS MONTH</text>
+    <text x="20" y="72" font-size="30" font-weight="800" fill="#0b0b0b">Rs 3,20,000</text>
+    <text x="20" y="94" font-size="12" fill="#52514e">Sum of every family's fee</text>
+  </g>
+
+  <!-- tile 2 -->
+  <g transform="translate(330,88)">
+    <rect width="258" height="110" rx="14" fill="#ffffff" stroke="#e1e0d9"/>
+    <rect width="258" height="5" rx="2.5" fill="#0ca30c"/>
+    <text x="20" y="36" font-size="12" font-weight="700" fill="#898781" letter-spacing="1">PAYMENTS RECEIVED</text>
+    <text x="20" y="72" font-size="30" font-weight="800" fill="#0b0b0b">Rs 2,56,000</text>
+    <rect x="20" y="80" width="118" height="18" rx="9" fill="#e2f3e2"/>
+    <text x="79" y="93" font-size="11" font-weight="700" fill="#006300" text-anchor="middle">80% collected</text>
+  </g>
+
+  <!-- tile 3 -->
+  <g transform="translate(612,88)">
+    <rect width="258" height="110" rx="14" fill="#ffffff" stroke="#e1e0d9"/>
+    <rect width="258" height="5" rx="2.5" fill="#2a78d6"/>
+    <text x="20" y="36" font-size="12" font-weight="700" fill="#898781" letter-spacing="1">COLLECTED TODAY</text>
+    <text x="20" y="72" font-size="30" font-weight="800" fill="#0b0b0b">Rs 18,500</text>
+    <text x="20" y="94" font-size="12" fill="#52514e">7 receipts printed</text>
+  </g>
+
+  <!-- tile 4 -->
+  <g transform="translate(894,88)">
+    <rect width="258" height="110" rx="14" fill="#ffffff" stroke="#e1e0d9"/>
+    <rect width="258" height="5" rx="2.5" fill="#d03b3b"/>
+    <text x="20" y="36" font-size="12" font-weight="700" fill="#898781" letter-spacing="1">TOTAL RECEIVABLES</text>
+    <text x="20" y="72" font-size="30" font-weight="800" fill="#d03b3b">Rs 96,000</text>
+    <text x="20" y="94" font-size="12" fill="#52514e">Owed by 23 families, all months</text>
+  </g>
+</svg>

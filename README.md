@@ -1,85 +1,112 @@
+<p align="center">
+  <img src="docs/hero.svg" alt="ilmsoft: fee collection for small schools. A phone showing the parents list with owing families in red." width="100%">
+</p>
+
+<p align="center">
+  <a href="https://ilmsoft.netlify.app"><strong>Try it</strong></a> ·
+  <a href="#what-it-costs">What it costs</a> ·
+  <a href="#run-it-for-your-own-school">Run it yourself</a> ·
+  <a href="#for-developers">For developers</a>
+</p>
+
 # ilmsoft
 
-**Fee collection and records for small schools. Simple enough to run from a phone.**
+You run a school of 50 to 500 students. Every month the same questions come back: who has paid, who owes, how much came in today, and does the register agree with the receipt book. ilmsoft answers those questions on one screen, from your phone, without a spreadsheet and without an accountant.
 
-MIT licensed. Free to self-host.
+It is used every day at a real school in Pakistan. It is free to run on your own, or Rs 2,000 a month hosted. MIT licensed.
 
-Most school software is built for big institutions and priced per student. ilmsoft is the opposite: one owner, a couple of managers, a few hundred students, and the daily job of collecting fees and keeping the books straight. It is in production at a real school in Pakistan and is built to stay small.
+<p align="center">
+  <img src="docs/pains.svg" alt="Three questions principals ask and how ilmsoft answers each: who hasn't paid, totals don't match, software costs too much." width="100%">
+</p>
 
-Live app: https://ilmsoft.netlify.app
+## A month in ilmsoft
 
-## What it does
+<p align="center">
+  <img src="docs/month.svg" alt="Four steps: generate the month, collect at the desk, see who still owes, close the month." width="100%">
+</p>
 
-- **Families and students.** Register a parent once, add their children, move students up a class at year end.
-- **Fees without spreadsheets.** Each class has a monthly fee. Each student may have a discount (percentage or fixed). Generate a month with one click and every family is billed class fee minus discount. Change a class fee and it applies to everyone in that class next month.
-- **Payments and statements.** Receive a payment, print the receipt, and the family's running statement is up to date. Every rupee lives in one ledger, so balances are always the sum of the ledger and can never drift.
-- **See who owes at a glance.** Families with dues show in red. Fee Stats shows this month's bill, collections, today's takings and total receivables.
-- **The rest of the money.** Income, expenses, suppliers and one-time collections (books, trips, exams) in the same place.
-- **Exams and result cards.** Terms, marks entry, printable result cards in the school's colours.
-- **Team.** An owner invites managers who can do the daily work but cannot change fees, delete records or touch billing.
-- **Receipts, invoices and result cards are rendered on demand.** Nothing is stored twice.
+**Generate the month.** Every class has a monthly fee. Every child may have a discount, in rupees or percent. One click bills every family the class fee minus the discount. Raise a class fee and every child in that class is billed the new amount next month. Nothing to recalculate by hand.
 
-## Principles
+**Collect at the desk.** Record the payment, print the receipt. The oldest unpaid month is cleared first, so partial payments never get lost.
 
-1. **One rule for fees.** Net fee = class fee − student discount, computed in the database at generation time. There is no second place a fee can come from.
-2. **The ledger is the truth.** Balances, receivables and statements are derived. Nothing is cached that could disagree with the ledger.
-3. **Small surface.** Six runtime dependencies. No backend server to run: the browser talks to Postgres through Supabase, and row-level security decides who sees what.
-4. **Every tenant is walled off in the database, not in the UI.** A school's users can only read and write their own school's rows, enforced by Postgres policies on every table.
-5. **If a feature is not needed by a small school, it is not here.**
+**See who still owes.** Families with dues are shown in red, with the amount, on the parents list and on Fee Stats. Tap a name to call, collect, or print their statement.
 
-## Stack
+**Close the month.** Billed, collected, receivables and expenses are on one page. Your income, expenses, book sales and supplier bills live in the same place as fees, so the month's picture is complete.
 
-React 19, TypeScript, Vite, SWR, lucide-react on the client. Supabase (Postgres, Auth, Storage) as the only backend. Static hosting on Netlify. Node 22.
+## The numbers a principal actually reads
 
-## Run it locally
+<p align="center">
+  <img src="docs/fee-stats.svg" alt="Four figures: billed this month, payments received with percent collected, collected today, total receivables owed by 23 families." width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/collections.svg" alt="Bar chart of billed versus collected per class for one month, with three classes lagging." width="100%">
+</p>
+
+## What you get
+
+- **Families and children in one place.** Register a parent once, add the children, promote a whole class at year end.
+- **Fees that follow one rule.** Class fee minus the child's discount. That rule is enforced in the database, so a fee can never come from two places.
+- **A ledger you can trust.** Every rupee is written once. Balances, statements and totals are always the sum of that ledger. Nothing can drift.
+- **Receipts, invoices and result cards on demand.** Print or reprint any of them any time; they are drawn from the records, never stored as copies.
+- **Exams and result cards** in your school's colours.
+- **A team without risk.** Invite managers who can do the daily work but cannot change fees, delete records or touch billing.
+- **Works on a phone.** The whole thing is designed for the screen you already carry.
+
+## What it costs
+
+| Choice | Price | What you get |
+|---|---|---|
+| Hosted at ilmsoft.netlify.app | Rs 2,000 for 30 days, or Rs 5,000 for 100 days | Sign up, add your school, start today. Pay by JazzCash or bank transfer. Same price for 50 students or 500. |
+| Run it yourself | Free | The code is MIT licensed. Host it on your own free Supabase and Netlify accounts. |
+
+If your hosted subscription lapses, the school becomes read-only. Nothing is ever deleted.
+
+## Run it for your own school
+
+You need a free [Supabase](https://supabase.com) project and a free [Netlify](https://netlify.com) account, and someone comfortable with a terminal for an afternoon.
 
 ```bash
 git clone https://github.com/1ArxAI/ilmsoft.git
 cd ilmsoft
 npm install
-cp .env.example .env.local   # add your Supabase URL and publishable key
+cp .env.example .env.local   # paste your Supabase URL and publishable key
 npm run dev
 ```
 
-Other scripts: `npm run build`, `npm test`, `npm run lint`, `npm run typecheck`.
+**Honest note:** the repository carries the incremental database migrations in `sql/` that were applied to the production project, but not yet one bootstrap file for a fresh Supabase project. That is the next thing to publish. Open an issue if you want to run your own instance now and we will walk you through it.
 
-**Self-hosting the database:** the repo carries the incremental migrations in `sql/` that were applied to the production project, but not yet a single bootstrap schema for a fresh Supabase project. That is the next thing to publish; until then, open an issue if you want to run your own instance and we will help.
+## Built to stay simple
 
-## Operations scripts
+1. **One fee rule**, computed in the database.
+2. **One ledger**, the only source of truth for money.
+3. **Six runtime dependencies** and no server of our own. The browser talks to Postgres through Supabase; row-level security decides who sees what.
+4. **Each school is walled off in the database**, not just in the interface.
+5. **If a small school does not need it on a normal day, it is not here.**
 
-For people running their own instance. All of them read connection details from `.env.local`.
+## For developers
+
+<details>
+<summary>Stack, scripts, roles and contributing</summary>
+
+**Stack.** React 19, TypeScript, Vite, SWR, lucide-react on the client. Supabase (Postgres, Auth, Storage) as the only backend. Static hosting on Netlify. Node 22.
+
+**Scripts.** `npm run dev`, `npm run build`, `npm test`, `npm run lint`, `npm run typecheck`.
+
+**Operations scripts** (read connection details from `.env.local`):
 
 | Script | What it does |
 |---|---|
-| `scripts/db_dump.mjs` | Full logical backup of the live database (schema + every table as JSON) into `backups/`. |
+| `scripts/db_dump.mjs` | Full logical backup of the live database (schema plus every table as JSON) into `backups/`. |
 | `scripts/db_restore.mjs` | Restore a dump, table by table, with an explicit confirmation. |
 | `scripts/backup_to_baserow.mjs` | Zip the newest dump and upload it to a Baserow table, keeping the last three. Runs nightly from GitHub Actions. |
 | `scripts/migrate_to_project.mjs` | Rebuild the whole database in a new Supabase project (for example to change region) and verify the copy against the original. |
 
-## Roles and safety
+**Roles.** Owner: everything for their school. Manager: daily work (families, students, payments, fee generation, exams, income and expenses) but no deleting financial history, changing class fees or managing the team. Platform admin: approves credit purchases and can read, not write, school data. Permanent deletion of a family or student is refused if any financial history exists.
 
-- **Owner:** everything for their school.
-- **Manager:** daily work (families, students, payments, fee generation, exams, income and expenses). Cannot delete financial history, change class fees, or manage the team.
-- **Platform admin:** approves credit purchases and can read, not write, school data.
-- A school whose subscription has lapsed becomes read-only; nothing is deleted.
-- Permanent deletion of a family or student is refused if any financial history exists.
+**Contributing.** Small pull requests that remove something are the most welcome. Before adding a feature, ask whether a small school needs it on a normal day. Keep the one fee rule and the one ledger intact, and keep every table behind row-level security. Run `npm run typecheck`, `npm run lint` and `npm test` before opening a PR.
 
-## Hosted plans
-
-The hosted version at ilmsoft.netlify.app runs on prepaid days: one credit is one day of access.
-
-| Plan | Days | Price |
-|---|---|---|
-| Monthly | 30 | Rs 2,000 |
-| Quarterly+ | 100 | Rs 5,000 |
-
-Payment is by JazzCash or bank transfer; the school submits the reference and a platform admin approves it. Self-hosting is free.
-
-## Contributing
-
-Small pull requests that remove something are the most welcome. Before adding a feature, ask whether a small school needs it on a normal day. If the answer is no, it does not belong here. Keep the one fee rule and the one ledger intact, and keep every table behind row-level security.
-
-Run `npm run typecheck`, `npm run lint` and `npm test` before opening a PR.
+</details>
 
 ## License
 
