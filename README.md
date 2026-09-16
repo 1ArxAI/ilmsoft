@@ -32,7 +32,7 @@ React 19, TypeScript, Vite, SWR, lucide-react on the client. Supabase (Postgres,
 ## Run it locally
 
 ```bash
-git clone https://github.com/shieldspprt/ilmsoft.git
+git clone https://github.com/1ArxAI/ilmsoft.git
 cd ilmsoft
 npm install
 cp .env.example .env.local   # add your Supabase URL and publishable key
