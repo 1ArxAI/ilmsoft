@@ -2,6 +2,8 @@
 
 **Fee collection and records for small schools. Simple enough to run from a phone.**
 
+MIT licensed. Free to self-host.
+
 Most school software is built for big institutions and priced per student. ilmsoft is the opposite: one owner, a couple of managers, a few hundred students, and the daily job of collecting fees and keeping the books straight. It is in production at a real school in Pakistan and is built to stay small.
 
 Live app: https://ilmsoft.netlify.app
@@ -81,4 +83,4 @@ Run `npm run typecheck`, `npm run lint` and `npm test` before opening a PR.
 
 ## License
 
-Not chosen yet. The repository is private today; a permissive license (MIT) will be added before it opens.
+[MIT](LICENSE). Use it, change it, run it for your school.
