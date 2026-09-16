@@ -1,77 +1,84 @@
-# ilmsoft - School Management System with Credit System
+# ilmsoft
 
-A multi-school SaaS platform with daily credit-based access control.
+**Fee collection and records for small schools. Simple enough to run from a phone.**
 
-## Credit System
+Most school software is built for big institutions and priced per student. ilmsoft is the opposite: one owner, a couple of managers, a few hundred students, and the daily job of collecting fees and keeping the books straight. It is in production at a real school in Pakistan and is built to stay small.
 
-### How it Works
-- **1 Credit = 1 Day** of system access
-- Schools purchase credits to activate their account
-- Credits expire after the purchased period ends
-- Dashboard is locked when credits run out
+Live app: https://ilmsoft.netlify.app
 
-### Pricing Plans
+## What it does
 
-| Plan | Credits | Duration | Price (PKR) | Per Day |
-|------|---------|----------|-------------|---------|
-| Monthly | 30 | 30 Days | Rs 2,000 | ~Rs 67 |
-| Quarterly+ | 100 | 100 Days | Rs 5,000 | Rs 50 (Save 17%) |
+- **Families and students.** Register a parent once, add their children, move students up a class at year end.
+- **Fees without spreadsheets.** Each class has a monthly fee. Each student may have a discount (percentage or fixed). Generate a month with one click and every family is billed class fee minus discount. Change a class fee and it applies to everyone in that class next month.
+- **Payments and statements.** Receive a payment, print the receipt, and the family's running statement is up to date. Every rupee lives in one ledger, so balances are always the sum of the ledger and can never drift.
+- **See who owes at a glance.** Families with dues show in red. Fee Stats shows this month's bill, collections, today's takings and total receivables.
+- **The rest of the money.** Income, expenses, suppliers and one-time collections (books, trips, exams) in the same place.
+- **Exams and result cards.** Terms, marks entry, printable result cards in the school's colours.
+- **Team.** An owner invites managers who can do the daily work but cannot change fees, delete records or touch billing.
+- **Receipts, invoices and result cards are rendered on demand.** Nothing is stored twice.
 
-### Credit Purchase Flow
+## Principles
 
-1. **School Admin**: Selects a plan and sends payment via JazzCash or Bank Transfer
-2. **School Admin**: Submits payment reference in the dashboard
-3. **System**: Creates a pending credit request
-4. **ilmsoft Admin**: Reviews and approves/rejects the request
-5. **On Approval**: Credits are added to the school's account immediately
+1. **One rule for fees.** Net fee = class fee − student discount, computed in the database at generation time. There is no second place a fee can come from.
+2. **The ledger is the truth.** Balances, receivables and statements are derived. Nothing is cached that could disagree with the ledger.
+3. **Small surface.** Six runtime dependencies. No backend server to run: the browser talks to Postgres through Supabase, and row-level security decides who sees what.
+4. **Every tenant is walled off in the database, not in the UI.** A school's users can only read and write their own school's rows, enforced by Postgres policies on every table.
+5. **If a feature is not needed by a small school, it is not here.**
 
-### Database Schema
+## Stack
 
-#### Tables
-- `schools` - School profiles with `total_credits` and `credit_expires_at`
-- `credit_requests` - Pending/approved/rejected purchase requests
-- `admin_users` - ilmsoft administrators who can approve requests
+React 19, TypeScript, Vite, SWR, lucide-react on the client. Supabase (Postgres, Auth, Storage) as the only backend. Static hosting on Netlify. Node 22.
 
-#### Key Features
-- **CreditGuard Component**: Blocks dashboard access when credits expire
-- **Real-time Updates**: Credit status updates immediately on approval
-- **Expiry Tracking**: Automatic expiration date calculation
-
-## Admin Access
-
-To create an admin user:
-
-1. Sign up normally at `/signup`
-2. Get the user ID from Supabase auth
-3. Insert into admin_users table:
-
-```sql
-INSERT INTO public.admin_users (user_id, email) 
-VALUES ('user-uuid-here', 'admin@example.com');
-```
-
-4. Access admin panel at `/admin`
-
-## Environment Variables
+## Run it locally
 
 ```bash
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
-```
-
-> Copy `.env.example` to `.env.local` and fill in your Supabase credentials.
-
-## Development
-
-```bash
+git clone https://github.com/shieldspprt/ilmsoft.git
+cd ilmsoft
 npm install
+cp .env.example .env.local   # add your Supabase URL and publishable key
 npm run dev
 ```
 
-## Deployment
+Other scripts: `npm run build`, `npm test`, `npm run lint`, `npm run typecheck`.
 
-The app is configured for static hosting on Netlify or similar platforms.
+**Self-hosting the database:** the repo carries the incremental migrations in `sql/` that were applied to the production project, but not yet a single bootstrap schema for a fresh Supabase project. That is the next thing to publish; until then, open an issue if you want to run your own instance and we will help.
 
-### Payment Accounts
+## Operations scripts
 
-Payment details are configured in `src/pages/Dashboard.tsx`. Update the JazzCash number and bank IBAN with your actual accounts before going live.
+For people running their own instance. All of them read connection details from `.env.local`.
+
+| Script | What it does |
+|---|---|
+| `scripts/db_dump.mjs` | Full logical backup of the live database (schema + every table as JSON) into `backups/`. |
+| `scripts/db_restore.mjs` | Restore a dump, table by table, with an explicit confirmation. |
+| `scripts/backup_to_baserow.mjs` | Zip the newest dump and upload it to a Baserow table, keeping the last three. Runs nightly from GitHub Actions. |
+| `scripts/migrate_to_project.mjs` | Rebuild the whole database in a new Supabase project (for example to change region) and verify the copy against the original. |
+
+## Roles and safety
+
+- **Owner:** everything for their school.
+- **Manager:** daily work (families, students, payments, fee generation, exams, income and expenses). Cannot delete financial history, change class fees, or manage the team.
+- **Platform admin:** approves credit purchases and can read, not write, school data.
+- A school whose subscription has lapsed becomes read-only; nothing is deleted.
+- Permanent deletion of a family or student is refused if any financial history exists.
+
+## Hosted plans
+
+The hosted version at ilmsoft.netlify.app runs on prepaid days: one credit is one day of access.
+
+| Plan | Days | Price |
+|---|---|---|
+| Monthly | 30 | Rs 2,000 |
+| Quarterly+ | 100 | Rs 5,000 |
+
+Payment is by JazzCash or bank transfer; the school submits the reference and a platform admin approves it. Self-hosting is free.
+
+## Contributing
+
+Small pull requests that remove something are the most welcome. Before adding a feature, ask whether a small school needs it on a normal day. If the answer is no, it does not belong here. Keep the one fee rule and the one ledger intact, and keep every table behind row-level security.
+
+Run `npm run typecheck`, `npm run lint` and `npm test` before opening a PR.
+
+## License
+
+Not chosen yet. The repository is private today; a permissive license (MIT) will be added before it opens.
